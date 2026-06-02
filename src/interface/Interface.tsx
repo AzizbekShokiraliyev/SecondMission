@@ -105,7 +105,4 @@ export interface OSRMStep {
     modifier?: string;
     instruction: string;
   };
-  // agar kerak bo'lsa qo'shimcha maydonlar
-  intersections?: unknown[];
-  rotary_name?: string;
-}
+} 

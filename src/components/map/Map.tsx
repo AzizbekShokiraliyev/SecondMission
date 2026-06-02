@@ -26,34 +26,21 @@ function Map() {
   ];
 
   return (
-    <MainMap
+    <MainMap  
       initialViewState={{ longitude: -100, latitude: 40, zoom: 3 }}
       style={{ width: "85vw", height: "100vh" }}
       mapStyle="https://demotiles.maplibre.org/style.json"
     >
       {geoJsonData && (
         <Source id="states" type="geojson" data={geoJsonData}>
-          <Layer
-            id="states-fill"
-            type="fill"
-            paint={{ 'fill-color': fillColor, 'fill-opacity': 0.5 }}
-          /> 
-
-          <Layer
-            id="states-border"
-            type="line"
-            paint={{ 'line-color': '#000', 'line-width': 1 }}
-          />
+          <Layer id="states-fill" type="fill" paint={{ 'fill-color': fillColor, 'fill-opacity': 0.5 }}/>
+          <Layer id="states-border" type="line" paint={{ 'line-color': '#000', 'line-width': 1 }}/>
         </Source>
       )}
 
       {routeGeometry && (
         <Source id="route" type="geojson" data={routeGeometry}>
-          <Layer
-            id="route-line"
-            type="line"
-            paint={{ 'line-color': routeColor, 'line-width': 3 }}
-          />
+          <Layer id="route-line" type="line" paint={{ 'line-color': routeColor, 'line-width': 3 }}/>
         </Source>
       )}
     </MainMap>

@@ -8,7 +8,7 @@ const RoadInfoCard = () => {
 
   const totalDistance = useMemo(() => {
   return instructions.reduce((sum, s) => sum + s.distance, 0);
-}, [instructions]);
+  }, [instructions]);
 
   const totalDuration = useMemo(() => {
     return instructions.reduce((sum, s) => sum + s.duration, 0);

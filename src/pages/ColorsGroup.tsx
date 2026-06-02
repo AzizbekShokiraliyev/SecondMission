@@ -19,7 +19,7 @@ const ColorsGroup = ({ value, onChange }: RouteColorPickerProps) => {
           className={cn("w-8 h-8 rounded-full border-2 flex items-center justify-center transition-transform",
           value === color.hex ? "border-black scale-110" : "border-transparent hover:scale-105")} style={{ backgroundColor: color.hex }}>
           {value === color.hex && (
-            <Check className="w-4 h-4 text-white stroke-[3]" />
+            <Check className="w-4 h-4 text-white stroke-[3]"/>
           )}
         </Button>
       ))}

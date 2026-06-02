@@ -11,8 +11,7 @@ const Search = ({ value, onChange, placeholder = "Search...", className }: Searc
             type="text"
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder}
-          />
+            placeholder={placeholder}/>
         </FieldGroup>
       </form>
     </div>
