@@ -6,6 +6,7 @@ import type { RootState } from '@/features/store/store';
 import type { ExpressionSpecification } from 'maplibre-gl';
 import type { Feature, LineString, MultiLineString } from 'geojson';
 import { FullscreenControl } from '@vis.gl/react-maplibre';
+import { Van } from 'lucide-react';
 
 function MapController() {
   const { current: map } = useMap();
@@ -159,7 +160,7 @@ function Map() {
       {start && (
         <Marker longitude={start[0]} latitude={start[1]} anchor="bottom">
           <div style={{ fontSize: 28, lineHeight: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }}>
-            🟢
+            <Van className='text-black'/>
           </div>
         </Marker>
       )}
