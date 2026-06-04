@@ -81,7 +81,6 @@ const Sidebar = () => {
     const fromCoord = getCentroid(fromLocation.geometry);
     const toCoord = getCentroid(toLocation.geometry);
 
-    // Nuqtalarni reduxga saqlash (agar kerak bo'lsa)
     const fromPoint: Feature<Point> = {
       type: 'Feature',
       geometry: { type: 'Point', coordinates: fromCoord },
@@ -109,7 +108,6 @@ const Sidebar = () => {
         };
         dispatch(setRouteGeometry(routeFeature));
 
-        // Burilish ko'rsatmalarini olish va tipga moslash
         const steps: DirectionStep[] = data.routes[0].legs[0].steps.map((step: OSRMStep) => ({
           distance: step.distance,
           duration: step.duration,
