@@ -41,7 +41,6 @@ function MapController() {
   return null;
 }
 
-
 function RouteController() {
   const { current: map } = useMap();
   const routeGeometry = useSelector((state: RootState) => state.map.routeGeometry);
@@ -195,6 +194,7 @@ function Map() {
         <NavigationControl position="top-right" />
         <ScaleControl position="bottom-right" />
 
+        {/* ── States layer ── */}
         <Source id="states" type="geojson" data={geoJsonData}>
           <Layer
             id="states-fill"
@@ -223,6 +223,7 @@ function Map() {
           />
         </Source>
 
+        {/* ── Route shadow (thicker, blurred) ── */}
         {routeGeometry && (
           <Source id="route" type="geojson" data={routeGeometry}>
             <Layer
