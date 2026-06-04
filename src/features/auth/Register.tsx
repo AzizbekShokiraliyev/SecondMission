@@ -15,8 +15,6 @@ import { auth } from '@/lib/fairBase'
 import { setUser } from '../store/authSlice'
 import { toast } from 'sonner'
 
-
-
 const loginScheme = z.object({
   fullName: z.string().min(2, { message: "Ism kamida 2 ta belgidan iborat bo'lishi kerak" }),
   email: z.string().email({ message: "Iltimos, to'g'ri email manzilini kiriting" }),

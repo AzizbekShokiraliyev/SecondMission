@@ -45,7 +45,7 @@ function Map() {
   const locations = useSelector((state: RootState) => state.geoJson.data);
 
   const [hoveredState, setHoveredState] = useState<string | null>(null);
-  const [popupInfo, setPopupInfo]       = useState<{ lng: number; lat: number; name: string } | null>(null);
+  const [popupInfo, setPopupInfo] = useState<{ lng: number; lat: number; name: string } | null>(null);
   
 
   const geoJsonData = useMemo(() => ({
@@ -56,8 +56,7 @@ function Map() {
   const fillColor: ExpressionSpecification = [
     'case',
     ['==', ['get', 'name'], selectedFeature?.properties?.name || ''], '#ef4444',
-    ['==', ['get', 'name'], hoveredState || ''],                       '#93c5fd',
-    '#d1d5db',
+    ['==', ['get', 'name'], hoveredState || ''], '#93c5fd', '#d1d5db',
   ];
 
   return (
