@@ -17,22 +17,6 @@ import type { ExpressionSpecification } from 'maplibre-gl';
 import type { Feature, LineString, MultiLineString } from 'geojson';
 
 
-const PIN_WRAPPER: React.CSSProperties = {
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  filter: 'drop-shadow(0 4px 8px rgba(0,0,0,0.35))',
-  animation: 'pinDrop .4s cubic-bezier(.34,1.56,.64,1) both',
-};
-
-const PIN_TAIL: React.CSSProperties = {
-  width: 2,
-  height: 10,
-  background: 'currentColor',
-  borderRadius: 1,
-};
-
-
 function MapController() {
   const { current: map } = useMap();
   const selectedFeature = useSelector((state: RootState) => state.map.selectedFeature);
@@ -104,7 +88,7 @@ function getRouteEndpoints(feature: Feature<LineString | MultiLineString> | null
 
 function StartMarker() {
   return (
-    <div style={{ ...PIN_WRAPPER, color: '#16a34a' }}>
+    <div style={{ color: '#16a34a' }}>
       <div style={{
         width: 36, height: 36, borderRadius: '50% 50% 50% 0',
         transform: 'rotate(-45deg)',
@@ -115,14 +99,14 @@ function StartMarker() {
       }}>
         <span style={{ transform: 'rotate(45deg)', fontSize: 16 }}>🚗</span>
       </div>
-      <div style={{ ...PIN_TAIL, color: '#16a34a', background: '#16a34a' }} />
+      <div style={{color: '#16a34a', background: '#16a34a' }} />
     </div>
   );
 }
 
 function EndMarker() {
   return (
-    <div style={{ ...PIN_WRAPPER, color: '#dc2626' }}>
+    <div style={{ color: '#dc2626' }}>
       <div style={{
         width: 36, height: 36, borderRadius: '50% 50% 50% 0',
         transform: 'rotate(-45deg)',
@@ -133,7 +117,7 @@ function EndMarker() {
       }}>
         <span style={{ transform: 'rotate(45deg)', fontSize: 16 }}>📍</span>
       </div>
-      <div style={{ ...PIN_TAIL, background: '#dc2626' }} />
+      <div style={{ background: '#dc2626' }} />
     </div>
   );
 }
@@ -167,7 +151,6 @@ function Map() {
 
   return (
     <div style={{ position: 'relative', width: '85vw', height: '100vh' }}>
-      {/* Keyframe injector */}
       <style>{`
         @keyframes pinDrop {
           from { transform: translateY(-20px) scale(.8); opacity: 0; }
@@ -212,7 +195,6 @@ function Map() {
         <NavigationControl position="top-right" />
         <ScaleControl position="bottom-right" />
 
-        {/* ── States layer ── */}
         <Source id="states" type="geojson" data={geoJsonData}>
           <Layer
             id="states-fill"
