@@ -43,9 +43,7 @@ function getRouteEndpoints(feature: Feature<LineString | MultiLineString> | null
   end: [number, number] | null;
 } {
   if (!feature) return { start: null, end: null };
-
   const geometry = feature.geometry;
-
   let coords: number[][] = [];
 
   if (geometry.type === 'LineString') {
