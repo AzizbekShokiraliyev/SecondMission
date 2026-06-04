@@ -1,17 +1,16 @@
-import { Map as MainMap, Source, Layer, Popup, NavigationControl, ScaleControl, useMap } from '@vis.gl/react-maplibre';
+import { Map as MainMap, Source, Layer, Popup, NavigationControl, ScaleControl, useMap, Marker } from '@vis.gl/react-maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useState, useMemo, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import type { RootState } from '@/features/store/store';
 import type { ExpressionSpecification } from 'maplibre-gl';
-import type { Feature } from 'geojson';
-import {FullscreenControl} from '@vis.gl/react-maplibre';
+import type { Feature, LineString, MultiLineString } from 'geojson';
+import { FullscreenControl } from '@vis.gl/react-maplibre';
 
 function MapController() {
   const { current: map } = useMap();
   const selectedFeature = useSelector((state: RootState) => state.map.selectedFeature);
 
-  
   useEffect(() => {
     if (!map || !selectedFeature) return;
 
@@ -33,10 +32,34 @@ function MapController() {
 
     const [lon, lat] = getCentroid(selectedFeature.geometry);
     map.flyTo({ center: [lon, lat], zoom: 5.5, duration: 1200, essential: true });
-
   }, [selectedFeature, map]);
 
   return null;
+}
+
+function getRouteEndpoints(feature: Feature<LineString | MultiLineString> | null): {
+  start: [number, number] | null;
+  end: [number, number] | null;
+} {
+  if (!feature) return { start: null, end: null };
+
+  const geometry = feature.geometry;
+
+  let coords: number[][] = [];
+
+  if (geometry.type === 'LineString') {
+    coords = geometry.coordinates;
+  } else if (geometry.type === 'MultiLineString') {
+    const all = geometry.coordinates;
+    coords = [...all[0], ...all[all.length - 1]];
+  }
+
+  if (coords.length < 2) return { start: null, end: null };
+
+  return {
+    start: [coords[0][0], coords[0][1]],
+    end: [coords[coords.length - 1][0], coords[coords.length - 1][1]],
+  };
 }
 
 function Map() {
@@ -59,11 +82,16 @@ function Map() {
     ['==', ['get', 'name'], hoveredState || ''], '#93c5fd', '#d1d5db',
   ], [selectedFeature, hoveredState]);
 
+  const { start, end } = useMemo(
+  () => getRouteEndpoints(routeGeometry as Feature<LineString | MultiLineString> | null),
+  [routeGeometry]
+);
+
   return (
     <MainMap
       initialViewState={{ longitude: -100, latitude: 40, zoom: 3 }}
       style={{ width: '85vw', height: '100vh' }}
-      mapStyle="https://demotiles.maplibre.org/style.json"
+      mapStyle="https://tiles.openfreemap.org/styles/liberty"
       cursor={hoveredState ? 'pointer' : 'auto'}
       interactiveLayerIds={['states-fill']}
       onMouseMove={(e) => {
@@ -85,12 +113,8 @@ function Map() {
       }}
     >
       <FullscreenControl position="top-right" />
-
       <MapController />
-
-      {/* Controls */}
       <NavigationControl position="top-right" />
-  
       <ScaleControl position="bottom-right" />
 
       {/* States layer */}
@@ -122,7 +146,6 @@ function Map() {
         />
       </Source>
 
-      {/* Route layer */}
       {routeGeometry && (
         <Source id="route" type="geojson" data={routeGeometry}>
           <Layer
@@ -134,7 +157,23 @@ function Map() {
         </Source>
       )}
 
-      {/* Popup — shtatga click qilinganda */}
+      {start && (
+        <Marker longitude={start[0]} latitude={start[1]} anchor="bottom">
+          <div style={{ fontSize: 28, lineHeight: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }}>
+            🟢
+          </div>
+        </Marker>
+      )}
+      {/* 📍 Tugash nuqtasi */}
+      {end && (
+        <Marker longitude={end[0]} latitude={end[1]} anchor="bottom">
+          <div style={{ fontSize: 28, lineHeight: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }}>
+            📍
+          </div>
+        </Marker>
+      )}
+
+      {/* Popup */}
       {popupInfo && (
         <Popup
           longitude={popupInfo.lng}
