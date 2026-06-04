@@ -89,7 +89,7 @@ function Map() {
 
   return (
     <MainMap
-      initialViewState={{ longitude: -100, latitude: 40, zoom: 3 }}
+      initialViewState={{ longitude: -95, latitude: 40, zoom: 4 }}
       style={{ width: '85vw', height: '100vh' }}
       mapStyle="https://tiles.openfreemap.org/styles/liberty"
       cursor={hoveredState ? 'pointer' : 'auto'}
@@ -117,7 +117,6 @@ function Map() {
       <NavigationControl position="top-right" />
       <ScaleControl position="bottom-right" />
 
-      {/* States layer */}
       <Source id="states" type="geojson" data={geoJsonData}>
         <Layer
           id="states-fill"
@@ -173,7 +172,6 @@ function Map() {
         </Marker>
       )}
 
-      {/* Popup */}
       {popupInfo && (
         <Popup
           longitude={popupInfo.lng}
