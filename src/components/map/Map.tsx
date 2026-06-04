@@ -11,6 +11,7 @@ function MapController() {
   const { current: map } = useMap();
   const selectedFeature = useSelector((state: RootState) => state.map.selectedFeature);
 
+  
   useEffect(() => {
     if (!map || !selectedFeature) return;
 
@@ -46,18 +47,17 @@ function Map() {
 
   const [hoveredState, setHoveredState] = useState<string | null>(null);
   const [popupInfo, setPopupInfo] = useState<{ lng: number; lat: number; name: string } | null>(null);
-  
 
   const geoJsonData = useMemo(() => ({
     type: 'FeatureCollection' as const,
     features: locations,
   }), [locations]);
 
-  const fillColor: ExpressionSpecification = [
+  const fillColor = useMemo((): ExpressionSpecification => [
     'case',
     ['==', ['get', 'name'], selectedFeature?.properties?.name || ''], '#ef4444',
     ['==', ['get', 'name'], hoveredState || ''], '#93c5fd', '#d1d5db',
-  ];
+  ], [selectedFeature, hoveredState]);
 
   return (
     <MainMap

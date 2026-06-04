@@ -162,7 +162,7 @@ const Sidebar = () => {
               
               <SidebarGroup>
                 <SidebarGroupLabel>Locations</SidebarGroupLabel>
-                <SidebarGroupContent className="max-h-[600px] overflow-y-auto">
+                <SidebarGroupContent className="max-h-[590px] overflow-y-auto">
                   <SidebarMenu>
                     {filteredLocations.length > 0 ? (
                       filteredLocations.map((loc) => (
