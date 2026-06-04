@@ -69,16 +69,16 @@ export interface RouteColorPickerProps {
 }
 
 export interface DirectionStep {
-  distance: number;        // metr
-  duration: number;        // sekund
-  instruction: string;     // masalan: "Chapga buriling"
-  name?: string;           // ko‘cha nomi
+  distance: number;        
+  duration: number;        
+  instruction: string;     
+  name?: string;           
   maneuver: {
     location: [number, number];
     bearing_before?: number;
     bearing_after?: number;
-    type: string;          // "turn", "merge", "depart", "arrive"
-    modifier?: string;     // "left", "right", "straight"
+    type: string;          
+    modifier?: string;     
   };
 }
 
@@ -89,6 +89,7 @@ export interface MapState {
   routeGeometry: Feature<LineString> | null;
   routeColor: string;
   directionsInstructions: DirectionStep[];
+  currentInstructionIndex: number;   
 }
 
 export interface OSRMStep {
@@ -105,4 +106,4 @@ export interface OSRMStep {
     modifier?: string;
     instruction: string;
   };
-} 
+}

@@ -2,12 +2,14 @@ import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './authSlice';
 import filterReducer from './filterSlice';
 import mapReducer from './mapSlice'
+import geoJsonReducer from './geoJsonSlice';
 
 export const store = configureStore({
   reducer: {
     auth: authReducer,
     location: filterReducer,
-    map: mapReducer
+    map: mapReducer,
+    geoJson: geoJsonReducer
   },
 });
 

@@ -1,8 +1,19 @@
-import { RouterProvider } from 'react-router-dom'
-import { router } from './features/routing/routes' // router faylingiz yo'lini to'g'irlang
+import { RouterProvider } from 'react-router-dom';
+import { useDispatch } from 'react-redux'; // Dispatch kerak
+import { useEffect } from 'react';
+import { router } from './features/routing/routes';
+import { fetchGeoJson } from './features/store/geoJsonSlice';
+import type { AppDispatch } from './features/store/store';
 
 const App = () => {
-  return <RouterProvider router={router} />
-}
+  const dispatch = useDispatch<AppDispatch>(); // Dispatch hookini ishlatish
 
-export default App
+  useEffect(() => {
+    dispatch(fetchGeoJson());
+  }, [dispatch]);
+
+  // Hooklar chaqirilgandan so'ng return qilinadi
+  return <RouterProvider router={router} />;
+};
+
+export default App;

@@ -1,7 +1,7 @@
 import { Sidebar as MainSidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import Search from "./Search";
 import Filter from "./Filter";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useDebounce } from 'use-debounce';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -40,7 +40,6 @@ const getCentroid = (geometry: Feature['geometry']): [number, number] => {
 };
 
 const Sidebar = () => {
-  const [locations, setLocations] = useState<Feature[]>([]);
   const [text, setText] = useState<string>("");
   const [debouncedValue] = useDebounce(text, 300);
   const [fromLocation, setFromLocation] = useState<Feature | null>(null);
@@ -51,6 +50,8 @@ const Sidebar = () => {
   const dispatch = useDispatch();
   const sortBy = useSelector((state: RootState) => state.location.sortBy) as "asc" | "desc" | null;
   const routeColor = useSelector((state: RootState) => state.map.routeColor);
+  
+  const locations = useSelector((state: RootState) => state.geoJson.data);
 
   const filteredLocations = locations
     .filter((loc) => loc.properties?.name?.toLowerCase().includes(debouncedValue.toLowerCase()))
@@ -131,12 +132,7 @@ const Sidebar = () => {
     }
   };
 
-  useEffect(() => {
-    fetch('/data/us-states.json')
-      .then(res => res.json())
-      .then(data => setLocations(data.features || []))
-      .catch(err => console.error("Xatolik:", err));
-  }, []);
+  
 
   return (
     <div>
@@ -159,29 +155,30 @@ const Sidebar = () => {
               </TabsList>
 
               <TabsContent value="location">
-                <div className="px-2 flex items-center gap-2 mt-2">
-                  <Search value={text} onChange={(val) => setText(val)} placeholder="Search locations..." />
-                  <Filter sortBy={sortBy} onSort={handleSort} />
-                </div>
-                <SidebarGroup>
-                  <SidebarGroupLabel>Locations</SidebarGroupLabel>
-                  <SidebarGroupContent>
-                    <SidebarMenu>
-                      {filteredLocations.length > 0 ? (
-                        filteredLocations.map((loc) => (
-                          <SidebarMenuItem key={loc.properties?.name}>
-                            <SidebarMenuButton onClick={() => handleLocationClick(loc)}>
-                              {loc.properties?.name}
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        ))
-                      ) : (
-                        <div className="p-4 text-center text-muted-foreground text-sm">Ma'lumot topilmadi</div>
-                      )}
-                    </SidebarMenu>
-                  </SidebarGroupContent>
-                </SidebarGroup>
-              </TabsContent>
+              <div className="px-2 flex items-center gap-2 mt-2">
+                <Search value={text} onChange={(val) => setText(val)} placeholder="Search locations..." />
+                <Filter sortBy={sortBy} onSort={handleSort} />
+              </div>
+              
+              <SidebarGroup>
+                <SidebarGroupLabel>Locations</SidebarGroupLabel>
+                <SidebarGroupContent className="max-h-[600px] overflow-y-auto">
+                  <SidebarMenu>
+                    {filteredLocations.length > 0 ? (
+                      filteredLocations.map((loc) => (
+                        <SidebarMenuItem key={loc.properties?.name}>
+                          <SidebarMenuButton onClick={() => handleLocationClick(loc)}>
+                            {loc.properties?.name}
+                          </SidebarMenuButton>
+                        </SidebarMenuItem>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-muted-foreground text-sm">Ma'lumot topilmadi</div>
+                    )}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </TabsContent>
 
               <TabsContent value="road">
                 <div className="mt-2 mb-2">

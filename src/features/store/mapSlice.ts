@@ -1,17 +1,8 @@
 // src/features/store/mapSlice.ts
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { Feature, LineString, Point } from "geojson";
-import type { DirectionStep } from "@/interface/Interface";
+import type { DirectionStep, MapState } from "@/interface/Interface";
 
-export interface MapState {
-  selectedFeature: Feature | null;
-  routeFrom: Feature<Point> | null;
-  routeTo: Feature<Point> | null;
-  routeGeometry: Feature<LineString> | null;
-  routeColor: string;
-  directionsInstructions: DirectionStep[];
-  currentInstructionIndex: number;   
-}
 
 const initialState: MapState = {
   selectedFeature: null,
@@ -44,7 +35,7 @@ const mapSlice = createSlice({
     },
     setDirectionsInstructions(state, action: PayloadAction<DirectionStep[]>) {
       state.directionsInstructions = action.payload;
-      state.currentInstructionIndex = 0;  
+      state.currentInstructionIndex = 0; 
     },
     setCurrentInstructionIndex(state, action: PayloadAction<number>) {
       state.currentInstructionIndex = action.payload;
