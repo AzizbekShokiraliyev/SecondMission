@@ -164,7 +164,6 @@ function Map() {
           </div>
         </Marker>
       )}
-      {/* 📍 Tugash nuqtasi */}
       {end && (
         <Marker longitude={end[0]} latitude={end[1]} anchor="bottom">
           <div style={{ fontSize: 28, lineHeight: 1, filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.4))' }}>
