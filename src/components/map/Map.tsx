@@ -15,6 +15,9 @@ import { useSelector } from 'react-redux';
 import type { RootState } from '@/features/store/store';
 import type { ExpressionSpecification } from 'maplibre-gl';
 import type { Feature, LineString, MultiLineString } from 'geojson';
+import { Button } from '../ui/button';
+import StartMarker from './StartMarker';
+import EndMarker from './EndMarker';
 
 
 function MapController() {
@@ -82,43 +85,6 @@ function getRouteEndpoints(feature: Feature<LineString | MultiLineString> | null
     start: [coords[0][0], coords[0][1]] as [number, number],
     end: [coords[coords.length - 1][0], coords[coords.length - 1][1]] as [number, number],
   };
-}
-
-
-function StartMarker() {
-  return (
-    <div style={{ color: '#16a34a' }}>
-      <div style={{
-        width: 36, height: 36, borderRadius: '50% 50% 50% 0',
-        transform: 'rotate(-45deg)',
-        background: 'linear-gradient(135deg,#22c55e,#16a34a)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 2px 12px rgba(22,163,74,.5)',
-        border: '3px solid #fff',
-      }}>
-        <span style={{ transform: 'rotate(45deg)', fontSize: 16 }}>🚗</span>
-      </div>
-      <div style={{color: '#16a34a', background: '#16a34a' }} />
-    </div>
-  );
-}
-
-function EndMarker() {
-  return (
-    <div style={{ color: '#dc2626' }}>
-      <div style={{
-        width: 36, height: 36, borderRadius: '50% 50% 50% 0',
-        transform: 'rotate(-45deg)',
-        background: 'linear-gradient(135deg,#f87171,#dc2626)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        boxShadow: '0 2px 12px rgba(220,38,38,.5)',
-        border: '3px solid #fff',
-      }}>
-        <span style={{ transform: 'rotate(45deg)', fontSize: 16 }}>📍</span>
-      </div>
-      <div style={{ background: '#dc2626' }} />
-    </div>
-  );
 }
 
   
@@ -194,7 +160,6 @@ function Map() {
         <NavigationControl position="top-right" />
         <ScaleControl position="bottom-right" />
 
-        {/* ── States layer ── */}
         <Source id="states" type="geojson" data={geoJsonData}>
           <Layer
             id="states-fill"
@@ -223,7 +188,6 @@ function Map() {
           />
         </Source>
 
-        {/* ── Route shadow (thicker, blurred) ── */}
         {routeGeometry && (
           <Source id="route" type="geojson" data={routeGeometry}>
             <Layer
@@ -295,14 +259,14 @@ function Map() {
                     {popupInfo.lat.toFixed(4)}°N, {Math.abs(popupInfo.lng).toFixed(4)}°W
                   </div>
                 </div>
-                <button
+                <Button
                   onClick={() => setPopupInfo(null)}
+                  size={"icon-sm"}
                   style={{
                     border: 'none', background: '#f1f5f9', borderRadius: 6,
-                    width: 22, height: 22, cursor: 'pointer', fontSize: 12,
-                    color: '#475569', marginLeft: 8,
+                    cursor: 'pointer', marginLeft: 8,
                   }}
-                >✕</button>
+                >✕</Button>
               </div>
             </div>
           </Popup>

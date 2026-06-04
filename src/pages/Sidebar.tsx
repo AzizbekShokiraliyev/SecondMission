@@ -65,7 +65,7 @@ const Sidebar = () => {
     });
 
   const fromFiltered = locations.filter(l=>l.properties?.name?.toLowerCase().includes(fromQuery.toLowerCase()));
-  const toFiltered   = locations.filter(l=>l.properties?.name?.toLowerCase().includes(toQuery.toLowerCase()));
+  const toFiltered = locations.filter(l=>l.properties?.name?.toLowerCase().includes(toQuery.toLowerCase()));
 
   const handleShowRoute = async () => {
     if (!fromLocation || !toLocation) {
@@ -74,15 +74,15 @@ const Sidebar = () => {
     }
     setLoading(true);
     const fromCoord = getCentroid(fromLocation.geometry);
-    const toCoord   = getCentroid(toLocation.geometry);
+    const toCoord = getCentroid(toLocation.geometry);
 
     const fromPoint: Feature<Point> = { type:'Feature', geometry:{ type:'Point', coordinates:fromCoord }, properties:{ name: fromLocation.properties?.name } };
-    const toPoint:   Feature<Point> = { type:'Feature', geometry:{ type:'Point', coordinates:toCoord   }, properties:{ name: toLocation.properties?.name   } };
+    const toPoint: Feature<Point> = { type:'Feature', geometry:{ type:'Point', coordinates:toCoord   }, properties:{ name: toLocation.properties?.name } };
     dispatch(setRouteFrom(fromPoint));
     dispatch(setRouteTo(toPoint));
 
     try {
-      const res  = await fetch(`https://router.project-osrm.org/route/v1/driving/${fromCoord[0]},${fromCoord[1]};${toCoord[0]},${toCoord[1]}?geometries=geojson&steps=true`);
+      const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${fromCoord[0]},${fromCoord[1]};${toCoord[0]},${toCoord[1]}?geometries=geojson&steps=true`);
       const data = await res.json();
       if (data.routes?.[0]) {
         const routeFeature: Feature<LineString> = {
@@ -135,10 +135,10 @@ const Sidebar = () => {
         <SidebarGroup>
           <Tabs defaultValue="location" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mx-2 mb-1" style={{ width:'calc(100% - 16px)' }}>
-              <TabsTrigger value="location" className="gap-1.5 text-xs">
+              <TabsTrigger value="location">
                 <MapPin className="w-3 h-3" /> Shtatlar
               </TabsTrigger>
-              <TabsTrigger value="road" className="gap-1.5 text-xs">
+              <TabsTrigger value="road">
                 <Route className="w-3 h-3" /> Yo'nalish
               </TabsTrigger>
             </TabsList>
@@ -149,8 +149,8 @@ const Sidebar = () => {
                 <Filter sortBy={sortBy} onSort={(t)=>dispatch(setSortBy(t))} />
               </div>
               <SidebarGroup>
-                <SidebarGroupLabel className="text-[10px] uppercase tracking-widest opacity-50">
-                  {filteredLocations.length} ta joylashuv
+                <SidebarGroupLabel>
+                  Locations
                 </SidebarGroupLabel>
                 <SidebarGroupContent className="max-h-[560px] overflow-y-auto pr-1">
                   <SidebarMenu>
@@ -182,9 +182,9 @@ const Sidebar = () => {
                   <div className="w-2 h-2 rounded-full bg-green-500"/>
                   Qayerdan
                 </label>
-                <Combobox onValueChange={(val) => {
-                  const s = locations.find(l=>l.properties?.name===val);
-                  setFromLoc(s||null);
+                <Combobox onValueChange={(value) => {
+                  const selectedLoc = locations.find(loc => loc.properties?.name === value);
+                  setFromLoc(selectedLoc||null);
                 }}>
                   <ComboboxInput onChange={(e)=>setFromQuery(e.target.value)} placeholder="Shtatni tanlang..." />
                   <ComboboxContent>
@@ -211,9 +211,9 @@ const Sidebar = () => {
                   <div className="w-2 h-2 rounded-full bg-red-500"/>
                   Qayerga
                 </label>
-                <Combobox onValueChange={(val) => {
-                  const s = locations.find(l=>l.properties?.name===val);
-                  setToLoc(s||null);
+                <Combobox onValueChange={(value) => {
+                  const selectedLoc = locations.find(loc => loc.properties?.name === value);
+                  setToLoc(selectedLoc||null);
                 }}>
                   <ComboboxInput onChange={(e)=>setToQuery(e.target.value)} placeholder="Shtatni tanlang..." />
                   <ComboboxContent>
