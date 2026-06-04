@@ -223,7 +223,6 @@ function Map() {
           />
         </Source>
 
-        {/* ── Route shadow (thicker, blurred) ── */}
         {routeGeometry && (
           <Source id="route" type="geojson" data={routeGeometry}>
             <Layer
