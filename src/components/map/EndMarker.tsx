@@ -1,4 +1,3 @@
-
 const EndMarker = () => {
   return (
     <div style={{ color: '#dc2626' }}>

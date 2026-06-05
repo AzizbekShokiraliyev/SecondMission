@@ -5,70 +5,22 @@ import {
   Popup,
   NavigationControl,
   ScaleControl,
-  useMap,
   Marker,
   FullscreenControl,
 } from '@vis.gl/react-maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { useState, useMemo, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useState, useMemo } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@/features/store/store';
-import type { ExpressionSpecification } from 'maplibre-gl';
+import type { ExpressionSpecification, MapLibreMap } from 'maplibre-gl';
 import type { Feature, LineString, MultiLineString } from 'geojson';
-import { Button } from '../ui/button';
 import StartMarker from './StartMarker';
 import EndMarker from './EndMarker';
+import { setSelectedFeature } from '@/features/store/mapSlice';
+import { getCentroid } from '@/lib/getCentroid';
 
-
-function MapController() {
-  const { current: map } = useMap();
-  const selectedFeature = useSelector((state: RootState) => state.map.selectedFeature);
-
-  useEffect(() => {
-    if (!map || !selectedFeature) return;
-    const getCentroid = (geometry: Feature['geometry']): [number, number] => {
-      if (geometry.type === 'Polygon') {
-        const c = geometry.coordinates[0];
-        return [c.reduce((s, p) => s + p[0], 0) / c.length, c.reduce((s, p) => s + p[1], 0) / c.length];
-      }
-      if (geometry.type === 'MultiPolygon') {
-        const c = geometry.coordinates[0][0];
-        return [c.reduce((s, p) => s + p[0], 0) / c.length, c.reduce((s, p) => s + p[1], 0) / c.length];
-      }
-      return [-100, 40];
-    };
-    const [lon, lat] = getCentroid(selectedFeature.geometry);
-    map.flyTo({ center: [lon, lat], zoom: 5.5, duration: 1200, essential: true });
-  }, [selectedFeature, map]);
-
-  return null;
-}
-
-function RouteController() {
-  const { current: map } = useMap();
-  const routeGeometry = useSelector((state: RootState) => state.map.routeGeometry);
-
-  useEffect(() => {
-    if (!map || !routeGeometry) return;
-    const feature = routeGeometry as Feature<LineString | MultiLineString>;
-    let coords: number[][] = [];
-    if (feature.geometry.type === 'LineString') coords = feature.geometry.coordinates;
-    else if (feature.geometry.type === 'MultiLineString')
-      coords = feature.geometry.coordinates.flat();
-    if (coords.length < 2) return;
-
-    const lons = coords.map(c => c[0]);
-    const lats = coords.map(c => c[1]);
-    const minLon = Math.min(...lons), maxLon = Math.max(...lons);
-    const minLat = Math.min(...lats), maxLat = Math.max(...lats);
-
-    map.fitBounds(
-      [[minLon, minLat], [maxLon, maxLat]],
-      { padding: { top: 80, bottom: 80, left: 120, right: 120 }, duration: 1400, essential: true }
-    );
-  }, [routeGeometry, map]);
-
-  return null;
+interface MapProps {
+  onMapLoad?: (map: MapLibreMap) => void;
 }
 
 
@@ -88,14 +40,15 @@ function getRouteEndpoints(feature: Feature<LineString | MultiLineString> | null
 }
 
   
-function Map() {
+function Map({ onMapLoad }: MapProps) {
   const selectedFeature = useSelector((state: RootState) => state.map.selectedFeature);
   const routeGeometry = useSelector((state: RootState) => state.map.routeGeometry);
   const routeColor = useSelector((state: RootState) => state.map.routeColor);
   const locations = useSelector((state: RootState) => state.geoJson.data);
-
+  const dispatch = useDispatch()
   const [hoveredState, setHoveredState] = useState<string | null>(null);
   const [popupInfo, setPopupInfo] = useState<{ lng: number; lat: number; name: string } | null>(null);
+  const selectedLocations = useSelector((state: RootState) => state.map.selectedLocations || []);
 
   const geoJsonData = useMemo(() => ({
     type: 'FeatureCollection' as const,
@@ -143,20 +96,47 @@ function Map() {
         mapStyle="https://tiles.openfreemap.org/styles/liberty"
         cursor={hoveredState ? 'pointer' : 'auto'}
         interactiveLayerIds={['states-fill']}
-        onMouseMove={(e) => setHoveredState(e.features?.[0]?.properties?.name ?? null)}
-        onMouseLeave={() => setHoveredState(null)}
-        onClick={(e) => {
-          const feature = e.features?.[0];
-          if (feature) {
-            setPopupInfo({ lng: e.lngLat.lng, lat: e.lngLat.lat, name: feature.properties?.name ?? 'Unknown' });
-          } else {
-            setPopupInfo(null);
+        onLoad={(e) => onMapLoad?.(e.target)} 
+
+        onMouseMove={(e) => {
+        const feature = e.features?.[0];
+        if (feature) {
+          const name = feature.properties?.name;
+          setHoveredState(name);
+          
+          if (popupInfo?.name !== name) {
+            setPopupInfo({ 
+              lng: e.lngLat.lng, 
+              lat: e.lngLat.lat, 
+              name: name ?? 'Unknown' 
+            });
           }
+        } else {
+          setHoveredState(null);
+          setPopupInfo(null);
+        }
         }}
-      >
+
+        onMouseLeave={() => {
+          setHoveredState(null);
+          setPopupInfo(null);
+        }}
+
+        onClick={(e) => {
+        const feature = e.features?.[0];  
+        if (feature) {
+          dispatch(setSelectedFeature(feature as Feature));
+          const coords = getCentroid((feature as Feature).geometry);
+          e.target.flyTo({
+            center: coords,
+            zoom: 6,
+            essential: true,
+            duration: 1500
+          });
+        }
+      }}>
+
         <FullscreenControl position="top-right" />
-        <MapController />
-        <RouteController />
         <NavigationControl position="top-right" />
         <ScaleControl position="bottom-right" />
 
@@ -233,6 +213,42 @@ function Map() {
           </Marker>
         )}
 
+
+        {selectedLocations.length > 0 && (
+          <Source 
+            id="multi-selected-source" 
+            type="geojson" 
+            data={{
+              type: 'FeatureCollection',
+              features: selectedLocations // Combobox'dan kelgan massiv
+            }}
+          >
+            <Layer
+              id="multi-selected-layer"
+              type="circle"
+              paint={{
+                'circle-radius': 10,
+                'circle-color': '#f59e0b', // Tanlanganlar uchun rang
+                'circle-opacity': 0.8,
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#ffffff'
+              }}
+            />
+          </Source>
+        )}
+
+
+        {selectedLocations.map((loc, index) => {
+          const coords = getCentroid(loc.geometry);
+          return (
+            <Marker key={index} longitude={coords[0]} latitude={coords[1]}>
+              <div className="bg-amber-500 text-white rounded-full w-6 h-6 flex items-center justify-center border-2 border-white font-bold text-xs">
+                {index + 1}
+              </div>
+            </Marker>
+          );
+        })}
+
         {popupInfo && (
           <Popup
             longitude={popupInfo.lng}
@@ -259,14 +275,6 @@ function Map() {
                     {popupInfo.lat.toFixed(4)}°N, {Math.abs(popupInfo.lng).toFixed(4)}°W
                   </div>
                 </div>
-                <Button
-                  onClick={() => setPopupInfo(null)}
-                  size={"icon-sm"}
-                  style={{
-                    border: 'none', background: '#f1f5f9', borderRadius: 6,
-                    cursor: 'pointer', marginLeft: 8,
-                  }}
-                >✕</Button>
               </div>
             </div>
           </Popup>
