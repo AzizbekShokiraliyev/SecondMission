@@ -1,6 +1,5 @@
-import type { Feature, Geometry, LineString } from "geojson";
+import type { Feature, LineString, Point } from "geojson";
 
-// Barcha interfeyslar faqat bir marta e'lon qilinadi
 export interface SearchProps {
   value: string;
   onChange: (value: string) => void;
@@ -22,7 +21,7 @@ export interface AuthState {
 }
 
 export interface GeoJsonFeature {
-  geometry: number; // Eslatma: GeoJSON da geometry odatda object bo'ladi
+  geometry: object;
   properties: {
     name: string;
   };
@@ -34,8 +33,8 @@ export interface FilterState {
 }
 
 export interface FilterProps {
-  sortBy: "asc" | "desc" | null;
-  onSort: (type: "asc" | "desc") => void;
+  sortBy: 'area-asc' | 'area-desc' | null;
+  onSort: (value: 'area-asc' | 'area-desc') => void;
 }
 
 export interface RouteColorPickerProps {
@@ -43,25 +42,35 @@ export interface RouteColorPickerProps {
   onChange: (color: string) => void;
 }
 
+
+export interface StoredRoute {
+  id: string;
+  geometry: Feature<LineString>;
+  color: string;
+}
+
 export interface MapState {
   selectedFeature: Feature | null;
-  routeFrom: Feature<Geometry> | null;
-  routeTo: Feature<Geometry> | null;
-  routeGeometry: Feature<LineString> | null;
+  routeFrom: Feature<Point> | null;
+  routeTo: Feature<Point> | null;
+  routes: StoredRoute[];      // yangi
+  routeColors: string[];
   routeColor: string;
   directionsInstructions: DirectionStep[];
   currentInstructionIndex: number;
-  selectedLocations: Feature[]; // Massiv tipi (Bo'sh massiv [] deb yozilmaydi)
+  selectedLocations: Feature[];
 }
 
-// LocationComboboxProps faqat BIR MARTA e'lon qilindi
 export interface LocationComboboxProps {
   label: string;
-  color: string;
-  onChange: (values: Feature[]) => void; // Har doim massiv qabul qiladi
+  colorClass: string;
+  selected: Feature[];
+  onUpdate: (selected: Feature[]) => void;
   locations: Feature[];
   placeholder?: string;
 }
+
+export type MultiSelectComboboxProps = LocationComboboxProps;
 
 export interface OSRMManeuver {
   location: [number, number];
@@ -93,13 +102,4 @@ export interface DirectionStep {
 export interface WaypointWithColor {
   feature: Feature;
   color: string;
-}
-
-export interface MultiSelectComboboxProps {
-  label: string;
-  colorClass: string; // masalan "bg-green-500"
-  selected: Feature[];
-  onUpdate: (selected: Feature[]) => void;
-  locations: Feature[];
-  placeholder?: string;
 }

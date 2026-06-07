@@ -1,16 +1,16 @@
 import { Sidebar as MainSidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import Search from "./Search";
 import Filter from "./Filter";
-import { useContext, useState } from "react";
+import { useContext, useState, useEffect } from "react";
 import { useDebounce } from 'use-debounce';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from '@/features/store/store';
-import { setSortBy } from "@/features/store/filterSlice";
+import { setSortBy, type SortByType } from "@/features/store/filterSlice";
 import ColorsGroup from "./ColorsGroup";
 import { setSelectedFeature, setRouteGeometry, setRouteColor, setDirectionsInstructions } from "@/features/store/mapSlice";
-import type { Feature } from "geojson";
+import type { Feature, GeoJsonProperties } from "geojson";
 import type { DirectionStep, OSRMLeg, OSRMStep } from "@/interface/Interface";
 import { toast } from "sonner";
 import { Navigation, MapPin, RotateCcw, Clock, Route, ArrowRight, Loader2 } from "lucide-react";
@@ -18,6 +18,18 @@ import LocationAdd from "./LocationAdd";
 import { MapContext } from "@/components/context/MapContext";
 import { getCentroid } from "@/lib/getCentroid";
 import { ComboboxLocation } from "./ComboboxLocation";
+
+// Helper to extract area value from properties (tries common keys)
+const getDensityFromProperties = (props: GeoJsonProperties | null | undefined): number => {
+  if (!props) return 0;
+  const val = props.density;
+  if (typeof val === 'number') return val;
+  if (typeof val === 'string') {
+    const parsed = parseFloat(val);
+    return isNaN(parsed) ? 0 : parsed;
+  }
+  return 0;
+};
 
 function fmtDist(m: number) {
   if (m >= 1000) return `${(m / 1000).toFixed(1)} km`;
@@ -36,30 +48,39 @@ const Sidebar = () => {
   const map = useContext(MapContext);
 
   const dispatch = useDispatch();
-  const sortBy = useSelector((s: RootState) => s.location.sortBy) as "asc" | "desc" | null;
+  const sortBy = useSelector((s: RootState) => s.location.sortBy) as SortByType;
   const routeColor = useSelector((s: RootState) => s.map.routeColor);
   const directions = useSelector((s: RootState) => s.map.directionsInstructions) as DirectionStep[];
   const locations = useSelector((s: RootState) => s.geoJson.data);
 
-  // IKKALA TANLOV: boshlang‘ich va to‘xtash nuqtalari
   const [fromPoints, setFromPoints] = useState<Feature[]>([]);
   const [toPoints, setToPoints] = useState<Feature[]>([]);
 
-  // Marshrut uchun barcha nuqtalar (tartib: fromPoints keyin toPoints)
   const allRoutePoints = [...fromPoints, ...toPoints];
 
   const totalDist = directions.reduce((s, d) => s + (d.distance || 0), 0);
   const totalTime = directions.reduce((s, d) => s + (d.duration || 0), 0);
 
+  // Filter and sort locations by name (search) and by area (if sortBy is active)
   const filteredLocations = locations
     .filter(l => l.properties?.name?.toLowerCase().includes(debouncedValue.toLowerCase()))
     .sort((a, b) => {
-      if (sortBy === 'asc') return (a.properties?.name || '').localeCompare(b.properties?.name || '');
-      if (sortBy === 'desc') return (b.properties?.name || '').localeCompare(a.properties?.name || '');
+      if (!sortBy) return 0;
+      const areaA = getDensityFromProperties(a.properties);
+      const areaB = getDensityFromProperties(b.properties);
+      if (sortBy === 'area-asc') return areaA - areaB;
+      if (sortBy === 'area-desc') return areaB - areaA;
       return 0;
     });
 
-  // MARŞRUTNI KO‘RSATISH
+  // Debug: log first location properties to see available fields (remove in production)
+  useEffect(() => {
+    if (locations.length > 0) {
+      console.log('Sample location properties:', locations[0].properties);
+      console.log('Detected area value:', getDensityFromProperties(locations[0].properties));
+    }
+  }, [locations]);
+
   const handleShowRoute = async () => {
     if (allRoutePoints.length < 2) {
       toast.error("Marshrut uchun kamida 2 ta nuqta tanlang (boshlang‘ich + kamida 1 ta to‘xtash joyi)");
@@ -84,7 +105,6 @@ const Sidebar = () => {
           properties: {}
         }));
 
-        // Navigatsiya bosqichlarini yig‘ish
         const steps: DirectionStep[] = route.legs.flatMap((leg: OSRMLeg) =>
           leg.steps.map((step: OSRMStep) => ({
             distance: step.distance,

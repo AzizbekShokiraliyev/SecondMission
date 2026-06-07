@@ -1,23 +1,24 @@
-import type { FilterState } from "@/interface/Interface";
-import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
+import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
+
+export type SortByType = 'area-asc' | 'area-desc' | null;
+
+interface FilterState {
+  sortBy: SortByType;
+}
 
 const initialState: FilterState = {
-  searchQuery: "",
-  sortBy: "",
+  sortBy: null,
 };
 
-export const filterSlice = createSlice({
-    name: "filter",
-    initialState,
-    reducers: {
-        setSearchQuery: (state, action: PayloadAction<string>) => {
-        state.searchQuery = action.payload;
+const filterSlice = createSlice({
+  name: 'location',
+  initialState,
+  reducers: {
+    setSortBy(state, action: PayloadAction<SortByType>) {
+      state.sortBy = action.payload;
     },
-        setSortBy: (state, action: PayloadAction<string>) => {
-        state.sortBy = action.payload;
-    },
-    }
-})
+  },
+});
 
-export const { setSearchQuery, setSortBy } = filterSlice.actions;
+export const { setSortBy } = filterSlice.actions;
 export default filterSlice.reducer;
