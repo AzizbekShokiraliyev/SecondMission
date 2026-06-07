@@ -220,7 +220,7 @@ function Map({ onMapLoad }: MapProps) {
             type="geojson" 
             data={{
               type: 'FeatureCollection',
-              features: selectedLocations // Combobox'dan kelgan massiv
+              features: selectedLocations
             }}
           >
             <Layer
@@ -228,7 +228,7 @@ function Map({ onMapLoad }: MapProps) {
               type="circle"
               paint={{
                 'circle-radius': 10,
-                'circle-color': '#f59e0b', // Tanlanganlar uchun rang
+                'circle-color': '#f59e0b',
                 'circle-opacity': 0.8,
                 'circle-stroke-width': 2,
                 'circle-stroke-color': '#ffffff'

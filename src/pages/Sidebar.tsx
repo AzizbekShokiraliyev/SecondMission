@@ -19,7 +19,6 @@ import { MapContext } from "@/components/context/MapContext";
 import { getCentroid } from "@/lib/getCentroid";
 import { ComboboxLocation } from "./ComboboxLocation";
 
-// Helper to extract area value from properties (tries common keys)
 const getDensityFromProperties = (props: GeoJsonProperties | null | undefined): number => {
   if (!props) return 0;
   const val = props.density;
@@ -61,7 +60,6 @@ const Sidebar = () => {
   const totalDist = directions.reduce((s, d) => s + (d.distance || 0), 0);
   const totalTime = directions.reduce((s, d) => s + (d.duration || 0), 0);
 
-  // Filter and sort locations by name (search) and by area (if sortBy is active)
   const filteredLocations = locations
     .filter(l => l.properties?.name?.toLowerCase().includes(debouncedValue.toLowerCase()))
     .sort((a, b) => {
@@ -73,7 +71,6 @@ const Sidebar = () => {
       return 0;
     });
 
-  // Debug: log first location properties to see available fields (remove in production)
   useEffect(() => {
     if (locations.length > 0) {
       console.log('Sample location properties:', locations[0].properties);
@@ -163,7 +160,6 @@ const Sidebar = () => {
               <TabsTrigger value="road"><Route className="w-3 h-3" /> Yo'nalish</TabsTrigger>
             </TabsList>
 
-            {/* LOCATION TAB */}
             <TabsContent value="location">
               <div className="px-2 flex items-center gap-2 mt-2">
                 <Search value={text} onChange={setText} placeholder="Qidirish..." />
@@ -201,7 +197,6 @@ const Sidebar = () => {
               <LocationAdd />
             </TabsContent>
 
-            {/* ROAD TAB */}
             <TabsContent value="road" className="px-2 space-y-3 mt-2">
               <ComboboxLocation
                 label="Qayerdan"

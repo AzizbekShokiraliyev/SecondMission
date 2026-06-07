@@ -4,7 +4,7 @@ import type { DirectionStep, StoredRoute } from '@/interface/Interface';
 
 export interface MapState {
   selectedFeature: Feature | null;
-  routeGeometry: Feature<LineString> | null;        // qo‘shildi
+  routeGeometry: Feature<LineString> | null;
   routeColor: string;
   directionsInstructions: DirectionStep[];
   selectedLocations: Feature[];
@@ -18,7 +18,7 @@ export interface MapState {
 const initialState: MapState = {
   selectedFeature: null,
   routeGeometry: null,
-  routeColor: '#3b82f6', // default ko‘k
+  routeColor: '#3b82f6',
   directionsInstructions: [],
   selectedLocations: [],
   routeFrom: null,
