@@ -1,13 +1,4 @@
-import {
-  Map as MainMap,
-  Source,
-  Layer,
-  Popup,
-  NavigationControl,
-  ScaleControl,
-  Marker,
-  FullscreenControl,
-} from '@vis.gl/react-maplibre';
+import {Map as MainMap, Source, Layer, Popup, NavigationControl, ScaleControl, Marker, FullscreenControl} from '@vis.gl/react-maplibre';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -228,7 +219,7 @@ function Map({ onMapLoad }: MapProps) {
               type="circle"
               paint={{
                 'circle-radius': 10,
-                'circle-color': '#f59e0b',
+                'circle-color': '#f59e0b', 
                 'circle-opacity': 0.8,
                 'circle-stroke-width': 2,
                 'circle-stroke-color': '#ffffff'

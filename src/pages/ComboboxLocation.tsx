@@ -34,10 +34,9 @@ export const ComboboxLocation = ({label, colorClass, selected, onUpdate, locatio
           {selected.map((loc) => (
             <Badge key={loc.properties?.name} variant="secondary">
               {loc.properties?.name}
-              <X
-                className="w-3 h-3 ml-1 cursor-pointer hover:text-red-500"
-                onClick={() => removeItem(loc)}
-              />
+              <div onClick={() => removeItem(loc)}>
+              <X className="w-3 h-3 ml-1 cursor-pointer hover:text-red-500"/>
+              </div>
             </Badge>
           ))}
         </div>
