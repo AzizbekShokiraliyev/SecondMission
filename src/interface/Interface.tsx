@@ -1,4 +1,3 @@
-import type { RouteStop } from "@/pages/Sidebar";
 import type { Feature, LineString, Point } from "geojson";
 import type { MapLibreMap } from "maplibre-gl";
 import {type MapProps as LibMapProps} from '@vis.gl/react-maplibre';
@@ -45,7 +44,6 @@ export interface RouteColorPickerProps {
   onChange: (color: string) => void;
 }
 
-
 export interface StoredRoute {
   id: string;
   geometry: Feature<LineString>;
@@ -62,6 +60,7 @@ export interface MapState {
   routeTo: Feature<Point> | null;
   routes: StoredRoute[];
   currentInstructionIndex: number;
+  selectedStateNames: string[];   // ← yangi
 }
 
 export interface ComboboxLocationProps {
@@ -102,12 +101,6 @@ export interface DirectionStep {
 export interface WaypointWithColor {
   feature: Feature;
   color: string;
-}
-
-
-export interface RouteStopListProps {
-  stops: RouteStop[];
-  onUpdate: (stops: RouteStop[]) => void;
 }
 
 export interface MapProps extends LibMapProps {

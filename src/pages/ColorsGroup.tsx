@@ -1,15 +1,14 @@
-import { cn } from '@/lib/utils'
-import { Check } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { cn } from '@/lib/utils';
+import { Check } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ROUTE_COLORS } from '@/lib/routeUtils'; 
 
-const ROUTE_COLORS = [
-  { hex: "#378ADD", name: "Ko'k" },
-  { hex: "#1D9E75", name: "Yashil" },
-  { hex: "#E24B4A", name: "Qizil" },
-  { hex: "#7F77DD", name: "Binafsha" },
-]
+interface ColorsGroupProps {
+  value: string;
+  onChange: (color: string) => void;
+}
 
-const ColorsGroup = ({ value, onChange }: { value: string; onChange: (color: string) => void }) => {
+const ColorsGroup = ({ value, onChange }: ColorsGroupProps) => {
   return (
     <div className="flex items-center gap-2 p-3 m-2 rounded-xl border">
       {ROUTE_COLORS.map((color) => (
@@ -29,7 +28,7 @@ const ColorsGroup = ({ value, onChange }: { value: string; onChange: (color: str
         </Button>
       ))}
     </div>
-  )
-}
+  );
+};
 
-export default ColorsGroup
+export default ColorsGroup;

@@ -12,6 +12,7 @@ const initialState: MapState = {
   routeTo: null,
   routes: [],
   currentInstructionIndex: 0,
+  selectedStateNames: [],   // ← yangi
 };
 
 const mapSlice = createSlice({
@@ -45,6 +46,16 @@ const mapSlice = createSlice({
     setCurrentInstructionIndex(state, action: PayloadAction<number>) {
       state.currentInstructionIndex = action.payload;
     },
+    // ← yangi: bir shtatni toggle qiladi
+    toggleStateName(state, action: PayloadAction<string>) {
+      const name = action.payload;
+      const idx = state.selectedStateNames.indexOf(name);
+      if (idx >= 0) {
+        state.selectedStateNames.splice(idx, 1);
+      } else {
+        state.selectedStateNames.push(name);
+      }
+    },
   },
 });
 
@@ -58,6 +69,7 @@ export const {
   setRouteTo,
   setRoutes,
   setCurrentInstructionIndex,
+  toggleStateName,
 } = mapSlice.actions;
 
 export default mapSlice.reducer;
