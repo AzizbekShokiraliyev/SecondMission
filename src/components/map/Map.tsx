@@ -36,10 +36,10 @@ function Map({ onMapLoad }: MapProps) {
   const routeGeometry = useSelector((state: RootState) => state.map.routeGeometry);
   const routeColor = useSelector((state: RootState) => state.map.routeColor);
   const locations = useSelector((state: RootState) => state.geoJson.data);
-  const dispatch = useDispatch()
+  const selectedLocations = useSelector((state: RootState) => state.map.selectedLocations || []);
   const [hoveredState, setHoveredState] = useState<string | null>(null);
   const [popupInfo, setPopupInfo] = useState<{ lng: number; lat: number; name: string } | null>(null);
-  const selectedLocations = useSelector((state: RootState) => state.map.selectedLocations || []);
+  const dispatch = useDispatch()
 
   const geoJsonData = useMemo(() => ({
     type: 'FeatureCollection' as const,
@@ -229,12 +229,16 @@ function Map({ onMapLoad }: MapProps) {
         )}
 
 
-        {selectedLocations.map((loc, index) => {
+        {selectedLocations.map((loc) => {
           const coords = getCentroid(loc.geometry);
           return (
-            <Marker key={index} longitude={coords[0]} latitude={coords[1]}>
-              <div className="bg-amber-500 text-white rounded-full w-6 h-6 flex items-center justify-center border-2 border-white font-bold text-xs">
-                {index + 1}
+            <Marker 
+              key={`${loc.properties?.name}-${coords[0]}-${coords[1]}`} 
+              longitude={coords[0]} 
+              latitude={coords[1]}
+            >
+              <div className="bg-amber-500 rounded-full w-6 h-6">
+                {loc.properties?.name}
               </div>
             </Marker>
           );

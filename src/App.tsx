@@ -12,7 +12,6 @@ const App = () => {
     dispatch(fetchGeoJson());
   }, [dispatch]);
 
-  // Hooklar chaqirilgandan so'ng return qilinadi
   return <RouterProvider router={router} />;
 };
 

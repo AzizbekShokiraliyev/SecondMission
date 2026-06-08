@@ -1,7 +1,7 @@
 import { Sidebar as MainSidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import Search from "./Search";
 import Filter from "./Filter";
-import { useContext, useState, useEffect } from "react";
+import { useContext, useState } from "react";
 import { useDebounce } from 'use-debounce';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import { Navigation, MapPin, RotateCcw, Clock, Route, ArrowRight, Loader2 } from
 import LocationAdd from "./LocationAdd";
 import { MapContext } from "@/components/context/MapContext";
 import { getCentroid } from "@/lib/getCentroid";
-import { ComboboxLocation } from "./ComboboxLocation";
+import ComboboxLocation  from "./ComboboxLocation";
 
 const getDensityFromProperties = (props: GeoJsonProperties | null | undefined): number => {
   if (!props) return 0;
@@ -71,12 +71,6 @@ const Sidebar = () => {
       return 0;
     });
 
-  useEffect(() => {
-    if (locations.length > 0) {
-      console.log('Sample location properties:', locations[0].properties);
-      console.log('Detected area value:', getDensityFromProperties(locations[0].properties));
-    }
-  }, [locations]);
 
   const handleShowRoute = async () => {
     if (allRoutePoints.length < 2) {
@@ -86,8 +80,8 @@ const Sidebar = () => {
 
     setLoading(true);
     const coordsString = allRoutePoints
-      .map(l => getCentroid(l.geometry))
-      .map(c => `${c[0]},${c[1]}`)
+      .map(loc => getCentroid(loc.geometry))
+      .map(coor => `${coor[0]},${coor[1]}`)
       .join(';');
 
     try {
@@ -134,7 +128,7 @@ const Sidebar = () => {
 
   const handleLocationSelect = (coords: [number, number]) => {
     if (map) {
-      map.flyTo({ center: coords, zoom: 4, essential: true, duration: 1500 });
+      map.flyTo({ center: coords, zoom: 6, essential: true, duration: 1500 });
     }
   };
 
@@ -203,7 +197,6 @@ const Sidebar = () => {
                 colorClass="bg-green-500"
                 selected={fromPoints}
                 onUpdate={setFromPoints}
-                locations={locations}
                 placeholder="Boshlang‘ich shahar..."
               />
 
@@ -218,7 +211,6 @@ const Sidebar = () => {
                 colorClass="bg-red-500"
                 selected={toPoints}
                 onUpdate={setToPoints}
-                locations={locations}
                 placeholder="To‘xtash joyi qo‘shish..."
               />
 

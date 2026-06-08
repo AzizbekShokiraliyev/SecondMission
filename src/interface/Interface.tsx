@@ -51,14 +51,14 @@ export interface StoredRoute {
 
 export interface MapState {
   selectedFeature: Feature | null;
-  routeFrom: Feature<Point> | null;
-  routeTo: Feature<Point> | null;
-  routes: StoredRoute[];      // yangi
-  routeColors: string[];
+  routeGeometry: Feature<LineString> | null;
   routeColor: string;
   directionsInstructions: DirectionStep[];
-  currentInstructionIndex: number;
   selectedLocations: Feature[];
+  routeFrom: Feature<Point> | null;
+  routeTo: Feature<Point> | null;
+  routes: StoredRoute[];
+  currentInstructionIndex: number;
 }
 
 export interface LocationComboboxProps {
@@ -66,7 +66,6 @@ export interface LocationComboboxProps {
   colorClass: string;
   selected: Feature[];
   onUpdate: (selected: Feature[]) => void;
-  locations: Feature[];
   placeholder?: string;
 }
 
