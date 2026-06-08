@@ -1,29 +1,30 @@
-import { Sidebar as MainSidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
+import {Sidebar as MainSidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem} from "@/components/ui/sidebar";
 import Search from "./Search";
 import Filter from "./Filter";
 import { useContext, useState } from "react";
-import { useDebounce } from 'use-debounce';
+import { useDebounce } from "use-debounce";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { useDispatch, useSelector } from "react-redux";
-import type { RootState } from '@/features/store/store';
+import type { RootState } from "@/features/store/store";
 import { setSortBy, type SortByType } from "@/features/store/filterSlice";
-import ColorsGroup from "./ColorsGroup";
-import { setSelectedFeature, setRouteGeometry, setRouteColor, setDirectionsInstructions } from "@/features/store/mapSlice";
+import { setSelectedFeature, setDirectionsInstructions, setRoutes } from "@/features/store/mapSlice";
 import type { Feature, GeoJsonProperties } from "geojson";
-import type { DirectionStep, OSRMLeg, OSRMStep } from "@/interface/Interface";
+import type { DirectionStep, OSRMLeg, OSRMStep, StoredRoute } from "@/interface/Interface";
 import { toast } from "sonner";
-import { Navigation, MapPin, RotateCcw, Clock, Route, ArrowRight, Loader2 } from "lucide-react";
-import LocationAdd from "./LocationAdd";
+import { Navigation, MapPin, RotateCcw, Clock, Route, Loader2 } from "lucide-react";
 import { MapContext } from "@/components/context/MapContext";
 import { getCentroid } from "@/lib/getCentroid";
-import ComboboxLocation  from "./ComboboxLocation";
+import ComboboxLocation from "./ComboboxLocation";
+import RouteStopList from "./RouteStopList";
+import LocationAdd from "./LocationAdd";
 
-const getDensityFromProperties = (props: GeoJsonProperties | null | undefined): number => {
+const getDensityFromProperties = (
+  props: GeoJsonProperties | null | undefined): number => {
   if (!props) return 0;
   const val = props.density;
-  if (typeof val === 'number') return val;
-  if (typeof val === 'string') {
+  if (typeof val === "number") return val;
+  if (typeof val === "string") {
     const parsed = parseFloat(val);
     return isNaN(parsed) ? 0 : parsed;
   }
@@ -36,9 +37,15 @@ function fmtDist(m: number) {
 }
 
 function fmtTime(s: number) {
-  if (s >= 3600) return `${Math.floor(s / 3600)}h ${Math.round((s % 3600) / 60)}m`;
+  if (s >= 3600)
+    return `${Math.floor(s / 3600)}h ${Math.round((s % 3600) / 60)}m`;
   return `${Math.round(s / 60)} min`;
 }
+
+export type RouteStop = {
+  feature: Feature;
+  color: string;
+};
 
 const Sidebar = () => {
   const [text, setText] = useState("");
@@ -48,70 +55,106 @@ const Sidebar = () => {
 
   const dispatch = useDispatch();
   const sortBy = useSelector((s: RootState) => s.location.sortBy) as SortByType;
-  const routeColor = useSelector((s: RootState) => s.map.routeColor);
-  const directions = useSelector((s: RootState) => s.map.directionsInstructions) as DirectionStep[];
+  const directions = useSelector(
+    (s: RootState) => s.map.directionsInstructions
+  ) as DirectionStep[];
   const locations = useSelector((s: RootState) => s.geoJson.data);
 
-  const [fromPoints, setFromPoints] = useState<Feature[]>([]);
-  const [toPoints, setToPoints] = useState<Feature[]>([]);
+  const [fromPoint, setFromPoint] = useState<Feature | null>(null);
+  const [stops, setStops] = useState<RouteStop[]>([]);
 
-  const allRoutePoints = [...fromPoints, ...toPoints];
+  const allRoutePoints: Feature[] = [
+    ...(fromPoint ? [fromPoint] : []),
+    ...stops.map((s) => s.feature),
+  ];
 
   const totalDist = directions.reduce((s, d) => s + (d.distance || 0), 0);
   const totalTime = directions.reduce((s, d) => s + (d.duration || 0), 0);
 
   const filteredLocations = locations
-    .filter(l => l.properties?.name?.toLowerCase().includes(debouncedValue.toLowerCase()))
+    .filter((l) =>
+      l.properties?.name?.toLowerCase().includes(debouncedValue.toLowerCase())
+    )
     .sort((a, b) => {
       if (!sortBy) return 0;
       const areaA = getDensityFromProperties(a.properties);
       const areaB = getDensityFromProperties(b.properties);
-      if (sortBy === 'area-asc') return areaA - areaB;
-      if (sortBy === 'area-desc') return areaB - areaA;
+      if (sortBy === "area-asc") return areaA - areaB;
+      if (sortBy === "area-desc") return areaB - areaA;
       return 0;
     });
 
-
   const handleShowRoute = async () => {
     if (allRoutePoints.length < 2) {
-      toast.error("Marshrut uchun kamida 2 ta nuqta tanlang (boshlang‘ich + kamida 1 ta to‘xtash joyi)");
+      toast.error("Kamida boshlang'ich + 1 ta to'xtash joyi tanlang");
       return;
     }
-
     setLoading(true);
-    const coordsString = allRoutePoints
-      .map(loc => getCentroid(loc.geometry))
-      .map(coor => `${coor[0]},${coor[1]}`)
-      .join(';');
 
     try {
-      const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordsString}?geometries=geojson&overview=full&steps=true`);
-      const data = await res.json();
+      const segmentRoutes: StoredRoute[] = [];
+      const allDirections: DirectionStep[] = [];
+      let totalDistance = 0;
 
-      if (data.routes?.[0]) {
-        const route = data.routes[0];
-        dispatch(setRouteGeometry({
-          type: 'Feature',
-          geometry: route.geometry,
-          properties: {}
-        }));
+      for (let i = 0; i < allRoutePoints.length - 1; i++) {
+        const from = getCentroid(allRoutePoints[i].geometry);
+        const to = getCentroid(allRoutePoints[i + 1].geometry);
+        const coordsString = `${from[0]},${from[1]};${to[0]},${to[1]}`;
+        const segmentColor = stops[i]?.color ?? "#ef4444";
+        const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${coordsString}?geometries=geojson&overview=full&steps=true`);
 
-        const steps: DirectionStep[] = route.legs.flatMap((leg: OSRMLeg) =>
-          leg.steps.map((step: OSRMStep) => ({
-            distance: step.distance,
-            duration: step.duration,
-            instruction: `${step.maneuver.type} ${step.maneuver.modifier ?? ''}`.trim(),
-            name: step.name,
-            maneuver: step.maneuver
-          }))
-        );
-        dispatch(setDirectionsInstructions(steps));
-        toast.success(`Marshrut tayyor! ${allRoutePoints.length} nuqta, ${(route.distance / 1000).toFixed(1)} km`);
-      } else {
-        toast.error("Ushbu nuqtalar bo‘ylab yo‘l topilmadi");
+        const data = await res.json();
+
+        if (data.routes?.[0]) {
+          const route = data.routes[0];
+          totalDistance += route.distance;
+
+          segmentRoutes.push({
+            id: `segment-${i}`,
+            geometry: {
+              type: "Feature",
+              geometry: route.geometry,
+              properties: {},
+            },
+            color: segmentColor,
+          });
+
+          const steps: DirectionStep[] = route.legs.flatMap((leg: OSRMLeg) =>
+            leg.steps.map((step: OSRMStep) => ({
+              distance: step.distance,
+              duration: step.duration,
+              instruction: `${step.maneuver.type} ${step.maneuver.modifier ?? ""}`.trim(),
+              name: step.name,
+              maneuver: step.maneuver,
+            }))
+          );
+          allDirections.push(...steps);
+        } else {
+          toast.error(`${i + 1}-segment uchun yo'l topilmadi`);
+        }
       }
-    } catch (error) {
-      console.error("Route error:", error);
+
+      dispatch(setRoutes(segmentRoutes));
+      dispatch(setDirectionsInstructions(allDirections));
+
+      toast.success(
+        `Marshrut tayyor! ${allRoutePoints.length} nuqta, ${(totalDistance / 1000).toFixed(1)} km`
+      );
+
+      // Barcha nuqtalarni ko'rsatish uchun map fit
+      if (map && segmentRoutes.length > 0) {
+        const allCoords = allRoutePoints.map((p) => getCentroid(p.geometry));
+        const lngs = allCoords.map((c) => c[0]);
+        const lats = allCoords.map((c) => c[1]);
+        map.fitBounds(
+          [
+            [Math.min(...lngs), Math.min(...lats)],
+            [Math.max(...lngs), Math.max(...lats)],
+          ],
+          { padding: 80, duration: 1500 }
+        );
+      }
+    } catch {
       toast.error("Marshrutni hisoblashda xatolik");
     } finally {
       setLoading(false);
@@ -119,9 +162,9 @@ const Sidebar = () => {
   };
 
   const handleClearRoute = () => {
-    setFromPoints([]);
-    setToPoints([]);
-    dispatch(setRouteGeometry(null));
+    setFromPoint(null);
+    setStops([]);
+    dispatch(setRoutes([]));
     dispatch(setDirectionsInstructions([]));
     toast.info("Marshrut tozalandi");
   };
@@ -141,7 +184,9 @@ const Sidebar = () => {
           </div>
           <div>
             <div className="text-base font-bold tracking-tight">MapFlow</div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-widest">Navigator</div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-widest">
+              Navigator
+            </div>
           </div>
         </div>
       </SidebarHeader>
@@ -149,9 +194,16 @@ const Sidebar = () => {
       <SidebarContent>
         <SidebarGroup>
           <Tabs defaultValue="location" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mx-2 mb-1" style={{ width: 'calc(100% - 16px)' }}>
-              <TabsTrigger value="location"><MapPin className="w-3 h-3" /> Shtatlar</TabsTrigger>
-              <TabsTrigger value="road"><Route className="w-3 h-3" /> Yo'nalish</TabsTrigger>
+            <TabsList
+              className="grid w-full grid-cols-2 mx-2 mb-1"
+              style={{ width: "calc(100% - 16px)" }}
+            >
+              <TabsTrigger value="location">
+                <MapPin className="w-3 h-3 mr-1" /> Shtatlar
+              </TabsTrigger>
+              <TabsTrigger value="road">
+                <Route className="w-3 h-3 mr-1" /> Yo'nalish
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="location">
@@ -170,8 +222,7 @@ const Sidebar = () => {
                             className="rounded-lg text-sm gap-2 transition-all hover:bg-blue-50 dark:hover:bg-blue-950/30"
                             onClick={() => {
                               dispatch(setSelectedFeature(loc));
-                              const coords = getCentroid(loc.geometry);
-                              handleLocationSelect(coords);
+                              handleLocationSelect(getCentroid(loc.geometry));
                             }}
                           >
                             <MapPin className="w-3 h-3 text-blue-500 shrink-0" />
@@ -188,70 +239,59 @@ const Sidebar = () => {
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
-              <LocationAdd />
             </TabsContent>
 
             <TabsContent value="road" className="px-2 space-y-3 mt-2">
               <ComboboxLocation
-                label="Qayerdan"
-                colorClass="bg-green-500"
-                selected={fromPoints}
-                onUpdate={setFromPoints}
-                placeholder="Boshlang‘ich shahar..."
+                selected={fromPoint}
+                onUpdate={setFromPoint}
+                placeholder="Boshlang'ich shahar..."
               />
 
-              <div className="flex justify-center">
-                <div className="w-6 h-6 rounded-full border-2 border-dashed border-muted-foreground/30 flex items-center justify-center">
-                  <ArrowRight className="w-3 h-3 text-muted-foreground rotate-90" />
-                </div>
-              </div>
+              <RouteStopList stops={stops} onUpdate={setStops} />
 
-              <ComboboxLocation
-                label="Qayerga (to'xtash nuqtalari)"
-                colorClass="bg-red-500"
-                selected={toPoints}
-                onUpdate={setToPoints}
-                placeholder="To‘xtash joyi qo‘shish..."
-              />
-
-              <div className="space-y-1">
-                <label className="text-[10px] uppercase tracking-widest text-muted-foreground">Yo'l rangi</label>
-                <ColorsGroup value={routeColor} onChange={(c) => dispatch(setRouteColor(c))} />
-              </div>
-
-              <div className="flex gap-2">
+              <div className="flex gap-2 pt-1">
                 <Button
                   className="flex-1 gap-2 font-semibold"
                   onClick={handleShowRoute}
                   disabled={loading || allRoutePoints.length < 2}
                 >
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Navigation className="w-4 h-4" />}
+                  {loading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Navigation className="w-4 h-4" />
+                  )}
                   {loading ? "Qidirmoqda..." : "Yo'nalishni ko'rsat"}
                 </Button>
-                {(fromPoints.length > 0 || toPoints.length > 0) && (
-                  <Button variant="outline" size="icon" onClick={handleClearRoute} title="Tozalash">
+                {(fromPoint || stops.length > 0) && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={handleClearRoute}
+                    title="Tozalash"
+                  >
                     <RotateCcw className="w-4 h-4" />
                   </Button>
                 )}
               </div>
 
               {directions.length > 0 && (
-                <div className="space-y-2 mt-1">
-                  <div className="rounded-xl bg-gradient-to-r from-blue-500/10 to-blue-600/5 border border-blue-200/50 dark:border-blue-800/30 p-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Route className="w-4 h-4 text-blue-500" />
-                      <span className="text-sm font-semibold">{fmtDist(totalDist)}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Clock className="w-3.5 h-3.5 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground">~{fmtTime(totalTime)}</span>
-                    </div>
+                <div className="rounded-xl bg-blue-500/10 border border-blue-200/50 dark:border-blue-800/30 p-3 flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Route className="w-4 h-4 text-blue-500" />
+                    <span className="text-sm font-semibold">{fmtDist(totalDist)}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="w-3.5 h-3.5 text-muted-foreground" />
+                    <span className="text-xs text-muted-foreground">
+                      ~{fmtTime(totalTime)}
+                    </span>
                   </div>
                 </div>
               )}
-
-              <LocationAdd />
             </TabsContent>
+
+            <LocationAdd/>
           </Tabs>
         </SidebarGroup>
       </SidebarContent>

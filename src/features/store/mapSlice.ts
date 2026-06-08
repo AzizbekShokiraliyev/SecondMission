@@ -1,8 +1,6 @@
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
 import type { Feature, LineString, Point } from 'geojson';
-import type { DirectionStep, MapState } from '@/interface/Interface';
-
-
+import type { DirectionStep, MapState, StoredRoute } from '@/interface/Interface';
 
 const initialState: MapState = {
   selectedFeature: null,
@@ -41,6 +39,12 @@ const mapSlice = createSlice({
     setRouteTo(state, action: PayloadAction<Feature<Point> | null>) {
       state.routeTo = action.payload;
     },
+    setRoutes(state, action: PayloadAction<StoredRoute[]>) {
+      state.routes = action.payload;
+    },
+    setCurrentInstructionIndex(state, action: PayloadAction<number>) {
+      state.currentInstructionIndex = action.payload;
+    },
   },
 });
 
@@ -52,6 +56,8 @@ export const {
   setSelectedLocations,
   setRouteFrom,
   setRouteTo,
+  setRoutes,
+  setCurrentInstructionIndex,
 } = mapSlice.actions;
 
 export default mapSlice.reducer;

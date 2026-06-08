@@ -3,16 +3,14 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@/features/store/store';
-import type { ExpressionSpecification, MapLibreMap } from 'maplibre-gl';
+import type { ExpressionSpecification } from 'maplibre-gl';
 import type { Feature, LineString, MultiLineString } from 'geojson';
 import StartMarker from './StartMarker';
 import EndMarker from './EndMarker';
 import { setSelectedFeature } from '@/features/store/mapSlice';
 import { getCentroid } from '@/lib/getCentroid';
-
-interface MapProps {
-  onMapLoad?: (map: MapLibreMap) => void;
-}
+import type { StoredRoute } from '@/interface/Interface';
+import type { MapProps } from '@/interface/Interface';
 
 
 function getRouteEndpoints(feature: Feature<LineString | MultiLineString> | null) {
@@ -30,16 +28,14 @@ function getRouteEndpoints(feature: Feature<LineString | MultiLineString> | null
   };
 }
 
-  
 function Map({ onMapLoad }: MapProps) {
   const selectedFeature = useSelector((state: RootState) => state.map.selectedFeature);
-  const routeGeometry = useSelector((state: RootState) => state.map.routeGeometry);
-  const routeColor = useSelector((state: RootState) => state.map.routeColor);
+  const routes = useSelector((state: RootState) => state.map.routes);
   const locations = useSelector((state: RootState) => state.geoJson.data);
   const selectedLocations = useSelector((state: RootState) => state.map.selectedLocations || []);
   const [hoveredState, setHoveredState] = useState<string | null>(null);
   const [popupInfo, setPopupInfo] = useState<{ lng: number; lat: number; name: string } | null>(null);
-  const dispatch = useDispatch()
+  const dispatch = useDispatch();
 
   const geoJsonData = useMemo(() => ({
     type: 'FeatureCollection' as const,
@@ -53,10 +49,22 @@ function Map({ onMapLoad }: MapProps) {
     '#d1d5db',
   ], [selectedFeature, hoveredState]);
 
-  const { start, end } = useMemo(
-    () => getRouteEndpoints(routeGeometry as Feature<LineString | MultiLineString> | null),
-    [routeGeometry]
-  );
+  const firstRouteStart = useMemo(() => {
+    if (!routes.length) return null;
+    return getRouteEndpoints(routes[0].geometry as Feature<LineString | MultiLineString>).start;
+  }, [routes]);
+
+  const lastRouteEnd = useMemo(() => {
+    if (!routes.length) return null;
+    return getRouteEndpoints(routes[routes.length - 1].geometry as Feature<LineString | MultiLineString>).end;
+  }, [routes]);
+
+  const intermediatePoints = useMemo(() => {
+    if (routes.length < 2) return [];
+    return routes.slice(0, -1).map((route) => {
+      return getRouteEndpoints(route.geometry as Feature<LineString | MultiLineString>).end;
+    }).filter(Boolean) as [number, number][];
+  }, [routes]);
 
   return (
     <div style={{ position: 'relative', width: '85vw', height: '100vh' }}>
@@ -87,25 +95,24 @@ function Map({ onMapLoad }: MapProps) {
         mapStyle="https://tiles.openfreemap.org/styles/liberty"
         cursor={hoveredState ? 'pointer' : 'auto'}
         interactiveLayerIds={['states-fill']}
-        onLoad={(e) => onMapLoad?.(e.target)} 
+        onLoad={(e) => onMapLoad?.(e.target)}
 
         onMouseMove={(e) => {
-        const feature = e.features?.[0];
-        if (feature) {
-          const name = feature.properties?.name;
-          setHoveredState(name);
-          
-          if (popupInfo?.name !== name) {
-            setPopupInfo({ 
-              lng: e.lngLat.lng, 
-              lat: e.lngLat.lat, 
-              name: name ?? 'Unknown' 
-            });
+          const feature = e.features?.[0];
+          if (feature) {
+            const name = feature.properties?.name;
+            setHoveredState(name);
+            if (popupInfo?.name !== name) {
+              setPopupInfo({
+                lng: e.lngLat.lng,
+                lat: e.lngLat.lat,
+                name: name ?? 'Unknown'
+              });
+            }
+          } else {
+            setHoveredState(null);
+            setPopupInfo(null);
           }
-        } else {
-          setHoveredState(null);
-          setPopupInfo(null);
-        }
         }}
 
         onMouseLeave={() => {
@@ -114,23 +121,24 @@ function Map({ onMapLoad }: MapProps) {
         }}
 
         onClick={(e) => {
-        const feature = e.features?.[0];  
-        if (feature) {
-          dispatch(setSelectedFeature(feature as Feature));
-          const coords = getCentroid((feature as Feature).geometry);
-          e.target.flyTo({
-            center: coords,
-            zoom: 6,
-            essential: true,
-            duration: 1500
-          });
-        }
-      }}>
-
+          const feature = e.features?.[0];
+          if (feature) {
+            dispatch(setSelectedFeature(feature as Feature));
+            const coords = getCentroid((feature as Feature).geometry);
+            e.target.flyTo({
+              center: coords,
+              zoom: 6,
+              essential: true,
+              duration: 1500
+            });
+          }
+        }}
+      >
         <FullscreenControl position="top-right" />
         <NavigationControl position="top-right" />
         <ScaleControl position="bottom-right" />
 
+        {/* States layer */}
         <Source id="states" type="geojson" data={geoJsonData}>
           <Layer
             id="states-fill"
@@ -159,28 +167,41 @@ function Map({ onMapLoad }: MapProps) {
           />
         </Source>
 
-        {routeGeometry && (
-          <Source id="route" type="geojson" data={routeGeometry}>
+        {routes.map((route: StoredRoute) => (
+          <Source key={route.id} id={route.id} type="geojson" data={route.geometry}>
             <Layer
-              id="route-shadow"
+              id={`${route.id}-shadow`}
               type="line"
               layout={{ 'line-cap': 'round', 'line-join': 'round' }}
-              paint={{ 'line-color': '#000', 'line-width': 10, 'line-opacity': 0.12, 'line-blur': 4 }}
+              paint={{
+                'line-color': '#000',
+                'line-width': 10,
+                'line-opacity': 0.12,
+                'line-blur': 4,
+              }}
             />
             <Layer
-              id="route-bg"
+              id={`${route.id}-bg`}
               type="line"
               layout={{ 'line-cap': 'round', 'line-join': 'round' }}
-              paint={{ 'line-color': '#fff', 'line-width': 7, 'line-opacity': 0.7 }}
+              paint={{
+                'line-color': '#fff',
+                'line-width': 7,
+                'line-opacity': 0.7,
+              }}
             />
             <Layer
-              id="route-line"
+              id={`${route.id}-line`}
               type="line"
               layout={{ 'line-cap': 'round', 'line-join': 'round' }}
-              paint={{ 'line-color': routeColor, 'line-width': 5, 'line-opacity': 1 }}
+              paint={{
+                'line-color': route.color,
+                'line-width': 5,
+                'line-opacity': 1,
+              }}
             />
             <Layer
-              id="route-dash"
+              id={`${route.id}-dash`}
               type="line"
               layout={{ 'line-cap': 'round', 'line-join': 'round' }}
               paint={{
@@ -191,24 +212,39 @@ function Map({ onMapLoad }: MapProps) {
               }}
             />
           </Source>
-        )}
+        ))}
 
-        {start && (
-          <Marker longitude={start[0]} latitude={start[1]} anchor="bottom">
+        {firstRouteStart && (
+          <Marker longitude={firstRouteStart[0]} latitude={firstRouteStart[1]} anchor="bottom">
             <StartMarker />
           </Marker>
         )}
-        {end && (
-          <Marker longitude={end[0]} latitude={end[1]} anchor="bottom">
+
+        {intermediatePoints.map((point, i) => (
+          <Marker key={`waypoint-${i}`} longitude={point[0]} latitude={point[1]} anchor="center">
+            <div
+              style={{
+                width: 14,
+                height: 14,
+                borderRadius: '50%',
+                background: routes[i]?.color ?? '#888',
+                border: '2.5px solid #fff',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+              }}
+            />
+          </Marker>
+        ))}
+
+        {lastRouteEnd && (
+          <Marker longitude={lastRouteEnd[0]} latitude={lastRouteEnd[1]} anchor="bottom">
             <EndMarker />
           </Marker>
         )}
 
-
         {selectedLocations.length > 0 && (
-          <Source 
-            id="multi-selected-source" 
-            type="geojson" 
+          <Source
+            id="multi-selected-source"
+            type="geojson"
             data={{
               type: 'FeatureCollection',
               features: selectedLocations
@@ -219,7 +255,7 @@ function Map({ onMapLoad }: MapProps) {
               type="circle"
               paint={{
                 'circle-radius': 10,
-                'circle-color': '#f59e0b', 
+                'circle-color': '#f59e0b',
                 'circle-opacity': 0.8,
                 'circle-stroke-width': 2,
                 'circle-stroke-color': '#ffffff'
@@ -228,13 +264,12 @@ function Map({ onMapLoad }: MapProps) {
           </Source>
         )}
 
-
         {selectedLocations.map((loc) => {
           const coords = getCentroid(loc.geometry);
           return (
-            <Marker 
-              key={`${loc.properties?.name}-${coords[0]}-${coords[1]}`} 
-              longitude={coords[0]} 
+            <Marker
+              key={`${loc.properties?.name}-${coords[0]}-${coords[1]}`}
+              longitude={coords[0]}
               latitude={coords[1]}
             >
               <div className="bg-amber-500 rounded-full w-6 h-6">
@@ -244,6 +279,7 @@ function Map({ onMapLoad }: MapProps) {
           );
         })}
 
+        {/* Popup */}
         {popupInfo && (
           <Popup
             longitude={popupInfo.lng}
@@ -275,7 +311,6 @@ function Map({ onMapLoad }: MapProps) {
           </Popup>
         )}
       </MainMap>
-
     </div>
   );
 }
