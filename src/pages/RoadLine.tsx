@@ -1,5 +1,5 @@
 import { useState, useCallback, useContext, useRef, useEffect } from 'react';
-import { Plus, X, ArrowRight, Route, MapPin } from 'lucide-react';
+import { Plus, X, ArrowRight, Route } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,} from '@/components/ui/dialog';
 import { useDispatch } from 'react-redux';
@@ -128,13 +128,7 @@ const RoadLine = () => {
               />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                <MapPin className="w-3 h-3 text-green-500" />
-                Boshlang'ich nuqta
-              </label>
-              <ComboboxLocation selected={from} onUpdate={setFrom} placeholder="Qayerdan?" />
-            </div>
+            <ComboboxLocation selected={from} onUpdate={setFrom} placeholder="Qayerdan?" />
 
             <div className="flex items-center gap-2">
               <div className="flex-1 h-px bg-border/60" />
@@ -144,13 +138,7 @@ const RoadLine = () => {
               <div className="flex-1 h-px bg-border/60" />
             </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
-                <MapPin className="w-3 h-3 text-red-500" />
-                Tugatish nuqtasi
-              </label>
-              <ComboboxLocation selected={to} onUpdate={setTo} placeholder="Qayerga?" />
-            </div>
+            <ComboboxLocation selected={to} onUpdate={setTo} placeholder="Qayerga?" />
 
             <div className="space-y-2">
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
