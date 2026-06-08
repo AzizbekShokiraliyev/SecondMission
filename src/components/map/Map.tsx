@@ -68,12 +68,12 @@ function Map({ onMapLoad }: MapProps) {
     return getRouteEndpoints(routes[routes.length - 1].geometry as Feature<LineString | MultiLineString>).end;
   }, [routes]);
 
-  const intermediatePoints = useMemo(() => {
-    if (routes.length < 2) return [];
-    return routes.slice(0, -1)
-      .map((route) => getRouteEndpoints(route.geometry as Feature<LineString | MultiLineString>).end)
-      .filter(Boolean) as [number, number][];
-  }, [routes]);
+  // const intermediatePoints = useMemo(() => {
+  //   if (routes.length < 2) return [];
+  //   return routes.slice(0, -1)
+  //     .map((route) => getRouteEndpoints(route.geometry as Feature<LineString | MultiLineString>).end)
+  //     .filter(Boolean) as [number, number][];
+  // }, [routes]);
 
   return (
     <div style={{ position: 'relative', width: '85vw', height: '100vh' }}>
@@ -191,7 +191,7 @@ function Map({ onMapLoad }: MapProps) {
             <StartMarker />
           </Marker>
         )}
-        {intermediatePoints.map((point, i) => (
+        {/* {intermediatePoints.map((point, i) => (
           <Marker key={`waypoint-${i}`} longitude={point[0]} latitude={point[1]} anchor="center">
             <div style={{
               width: 14, height: 14, borderRadius: '50%',
@@ -200,7 +200,7 @@ function Map({ onMapLoad }: MapProps) {
               boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
             }} />
           </Marker>
-        ))}
+        ))} */}
         {lastRouteEnd && (
           <Marker longitude={lastRouteEnd[0]} latitude={lastRouteEnd[1]} anchor="bottom">
             <EndMarker />
