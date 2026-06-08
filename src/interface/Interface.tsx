@@ -1,7 +1,6 @@
 import type { Feature, LineString, Point } from "geojson";
 import type { MapLibreMap } from "maplibre-gl";
 import {type MapProps as LibMapProps} from '@vis.gl/react-maplibre';
-import type { Road } from "@/features/store/RoadSlice";
 
 export interface SearchProps {
   value: string;
@@ -108,9 +107,33 @@ export interface MapProps extends LibMapProps {
   onMapLoad?: (map: MapLibreMap) => void;
 }
 
+export interface ColorsGroupProps {
+  value: string;
+  onChange: (color: string) => void;
+}
+
+export interface RoadPoint {
+  name: string;
+  centroid: [number, number]; 
+}
+
+export interface Road {
+  id: string;
+  name: string;
+  from: RoadPoint;
+  to: RoadPoint;
+  color: string;
+  createdAt: number;
+}
+
+export interface RoadState {
+  roads: Road[];
+  activeRoadId: string | null;
+}
+
 export interface RoadHistory {
-    road: Road,
-    isActive: boolean,
-    onSelect: (r: Road) => void,
-    onRemove: (id: string) => void;
+  road: Road,
+  isActive: boolean,
+  onSelect: (r: Road) => void,
+  onRemove: (id: string) => void;
 }

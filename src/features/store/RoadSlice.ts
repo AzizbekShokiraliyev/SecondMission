@@ -1,24 +1,5 @@
+import type { Road, RoadState } from '@/interface/Interface';
 import { createSlice, type PayloadAction } from '@reduxjs/toolkit';
-
-// Faqat zarur ma'lumotlarni saqlaymiz — butun Feature emas
-export interface RoadPoint {
-  name: string;
-  centroid: [number, number]; // [lng, lat]
-}
-
-export interface Road {
-  id: string;
-  name: string;
-  from: RoadPoint;
-  to: RoadPoint;
-  color: string;
-  createdAt: number;
-}
-
-interface RoadState {
-  roads: Road[];
-  activeRoadId: string | null;
-}
 
 const initialState: RoadState = {
   roads: [],

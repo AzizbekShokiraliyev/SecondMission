@@ -2,11 +2,7 @@ import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ROUTE_COLORS } from '@/lib/routeUtils'; 
-
-interface ColorsGroupProps {
-  value: string;
-  onChange: (color: string) => void;
-}
+import type { ColorsGroupProps } from '@/interface/Interface';
 
 const ColorsGroup = ({ value, onChange }: ColorsGroupProps) => {
   return (

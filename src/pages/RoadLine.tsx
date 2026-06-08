@@ -1,11 +1,8 @@
 import { useState, useCallback, useContext, useRef, useEffect } from 'react';
 import { Plus, X, ArrowRight, Route, MapPin } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
-} from '@/components/ui/dialog';
+import {Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,} from '@/components/ui/dialog';
 import { useDispatch } from 'react-redux';
-import { addRoad, type Road, type RoadPoint } from '@/features/store/RoadSlice';
 import { MapContext } from '@/components/context/MapContext';
 import { getCentroid } from '@/lib/getCentroid';
 import { toast } from 'sonner';
@@ -14,6 +11,8 @@ import ColorsGroup from './ColorsGroup';
 import { ROUTE_COLORS, fetchAndDispatchRoute } from '@/lib/routeUtils'; // 👈 import shared utils
 import type { Feature } from 'geojson';
 import { Map } from 'maplibre-gl';
+import type { Road, RoadPoint } from '@/interface/Interface';
+import { addRoad } from '@/features/store/RoadSlice';
 
 const RoadLine = () => {
   const dispatch = useDispatch();
