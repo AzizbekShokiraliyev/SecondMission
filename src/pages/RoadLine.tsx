@@ -65,7 +65,7 @@ const RoadLine = () => {
 
     setLoading(true);
     try {
-      await fetchAndDispatchRoute(newRoad, dispatch, map);
+      await fetchAndDispatchRoute({ road: newRoad, dispatch, map });
       if (mountedRef.current) {
         toast.success(`Marshrut qo'shildi: ${newRoad.name}`);
       }

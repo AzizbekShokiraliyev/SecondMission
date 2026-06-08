@@ -83,7 +83,7 @@ const Sidebar = () => {
     }
     setRouteLoading(true);
     try {
-      await fetchAndDispatchRoute(road, dispatch, map);
+      await fetchAndDispatchRoute({ road, dispatch, map });
     } catch {
       toast.error(`Marshrut topilmadi: ${road.name}`);
     } finally {

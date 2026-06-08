@@ -1,8 +1,6 @@
-import type { Dispatch, AnyAction } from '@reduxjs/toolkit';
-import type { Map } from 'maplibre-gl';
-import { setActiveRoad, type Road } from '@/features/store/RoadSlice';
+import { setActiveRoad } from '@/features/store/RoadSlice';
 import { setRoutes, setDirectionsInstructions } from '@/features/store/mapSlice';
-import type { StoredRoute, OSRMLeg, OSRMStep, DirectionStep } from '@/interface/Interface';
+import type { StoredRoute, OSRMLeg, OSRMStep, DirectionStep, FetchRouteParams } from '@/interface/Interface';
 
 export const ROUTE_COLORS = [
   { hex: '#378ADD', name: "Ko'k" },
@@ -13,11 +11,7 @@ export const ROUTE_COLORS = [
   { hex: '#EC4899', name: 'Pushti' },
 ];
 
-export async function fetchAndDispatchRoute(
-  road: Road,
-  dispatch: Dispatch<AnyAction>,
-  map: Map | null
-): Promise<void> {
+export async function fetchAndDispatchRoute({ road, dispatch, map }: FetchRouteParams): Promise<void> {
   const coordsStr = `${road.from.centroid[0]},${road.from.centroid[1]};${road.to.centroid[0]},${road.to.centroid[1]}`;
 
   const res = await fetch(

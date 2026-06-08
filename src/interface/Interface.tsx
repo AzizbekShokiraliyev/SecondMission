@@ -1,6 +1,7 @@
 import type { Feature, LineString, Point } from "geojson";
-import type { MapLibreMap } from "maplibre-gl";
+import type { Map, MapLibreMap } from "maplibre-gl";
 import {type MapProps as LibMapProps} from '@vis.gl/react-maplibre';
+import type { AnyAction, Dispatch } from "@reduxjs/toolkit";
 
 export interface SearchProps {
   value: string;
@@ -136,4 +137,10 @@ export interface RoadHistory {
   isActive: boolean,
   onSelect: (r: Road) => void,
   onRemove: (id: string) => void;
+}
+
+export interface FetchRouteParams {
+  road: Road;
+  dispatch: Dispatch<AnyAction>;
+  map: Map | null;
 }
