@@ -8,13 +8,13 @@ import { getCentroid } from '@/lib/getCentroid';
 import { toast } from 'sonner';
 import ComboboxLocation from './ComboboxLocation';
 import ColorsGroup from './ColorsGroup';
-import { ROUTE_COLORS, fetchAndDispatchRoute } from '@/lib/routeUtils'; // 👈 import shared utils
+import { ROUTE_COLORS, fetchAndDispatchRoute } from '@/lib/routeUtils'; 
 import type { Feature } from 'geojson';
 import { Map } from 'maplibre-gl';
 import type { Road, RoadPoint } from '@/interface/Interface';
 import { addRoad } from '@/features/store/RoadSlice';
 
-const RoadLine = () => {
+const AddRoadLine = () => {
   const dispatch = useDispatch();
   const mapContext = useContext(MapContext);
   const map = mapContext instanceof Map ? mapContext : null;
@@ -27,8 +27,7 @@ const RoadLine = () => {
   const [loading, setLoading] = useState(false);
   const mountedRef = useRef(true);
 
-  useEffect(() => {
-    mountedRef.current = true;
+  useEffect(() => {mountedRef.current = true;
     return () => {
       mountedRef.current = false;
     };
@@ -128,7 +127,10 @@ const RoadLine = () => {
               />
             </div>
 
-            <ComboboxLocation selected={from} onUpdate={setFrom} placeholder="Qayerdan?" />
+                <div>
+              <ComboboxLocation selected={from} onUpdate={setFrom} placeholder="Qayerdan?" />
+                </div>
+              
 
             <div className="flex items-center gap-2">
               <div className="flex-1 h-px bg-border/60" />
@@ -176,4 +178,4 @@ const RoadLine = () => {
   );
 };
 
-export default RoadLine;
+export default AddRoadLine;

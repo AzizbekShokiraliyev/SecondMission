@@ -1,6 +1,6 @@
 import type { Feature, LineString, Point } from "geojson";
 import type { Map, MapLibreMap } from "maplibre-gl";
-import {type MapProps as LibMapProps} from '@vis.gl/react-maplibre';
+import { type MapProps as LibMapProps } from '@vis.gl/react-maplibre';
 import type { AnyAction, Dispatch } from "@reduxjs/toolkit";
 
 export interface SearchProps {
@@ -61,7 +61,7 @@ export interface MapState {
   routeTo: Feature<Point> | null;
   routes: StoredRoute[];
   currentInstructionIndex: number;
-  selectedStateNames: string[];   // ← yangi
+  selectedStateNames: string[];
 }
 
 export interface ComboboxLocationProps {
@@ -115,7 +115,7 @@ export interface ColorsGroupProps {
 
 export interface RoadPoint {
   name: string;
-  centroid: [number, number]; 
+  centroid: [number, number];
 }
 
 export interface Road {
@@ -125,17 +125,20 @@ export interface Road {
   to: RoadPoint;
   color: string;
   createdAt: number;
+  cachedGeometry?: Feature<LineString> | null;
+  cachedSteps?: DirectionStep[] | null;
 }
 
 export interface RoadState {
   roads: Road[];
   activeRoadId: string | null;
+  selectedRoadIds: string[];
 }
 
 export interface RoadHistory {
-  road: Road,
-  isActive: boolean,
-  onSelect: (r: Road) => void,
+  road: Road;
+  isActive: boolean;
+  onSelect: (r: Road) => void;
   onRemove: (id: string) => void;
 }
 
@@ -143,4 +146,12 @@ export interface FetchRouteParams {
   road: Road;
   dispatch: Dispatch<AnyAction>;
   map: Map | null;
+}
+
+
+export interface GeoJsonState {
+  baseFeatures: Feature[];
+  customLocations: Feature[];
+  loading: boolean;
+  data: Feature[];
 }

@@ -12,7 +12,7 @@ const initialState: MapState = {
   routeTo: null,
   routes: [],
   currentInstructionIndex: 0,
-  selectedStateNames: [],   // ← yangi
+  selectedStateNames: [],
 };
 
 const mapSlice = createSlice({
@@ -43,10 +43,20 @@ const mapSlice = createSlice({
     setRoutes(state, action: PayloadAction<StoredRoute[]>) {
       state.routes = action.payload;
     },
+    addRoute(state, action: PayloadAction<StoredRoute>) {
+      const idx = state.routes.findIndex((r) => r.id === action.payload.id);
+      if (idx >= 0) {
+        state.routes[idx] = action.payload;
+      } else {
+        state.routes.push(action.payload);
+      }
+    },
+    removeRoute(state, action: PayloadAction<string>) {
+      state.routes = state.routes.filter((r) => r.id !== action.payload);
+    },
     setCurrentInstructionIndex(state, action: PayloadAction<number>) {
       state.currentInstructionIndex = action.payload;
     },
-    // ← yangi: bir shtatni toggle qiladi
     toggleStateName(state, action: PayloadAction<string>) {
       const name = action.payload;
       const idx = state.selectedStateNames.indexOf(name);
@@ -68,6 +78,8 @@ export const {
   setRouteFrom,
   setRouteTo,
   setRoutes,
+  addRoute,
+  removeRoute,
   setCurrentInstructionIndex,
   toggleStateName,
 } = mapSlice.actions;

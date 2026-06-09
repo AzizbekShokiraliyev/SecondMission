@@ -7,18 +7,18 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState } from '@/features/store/store';
 import { setSortBy, type SortByType } from '@/features/store/filterSlice';
-import { setDirectionsInstructions, setRoutes, toggleStateName } from '@/features/store/mapSlice';
-import { removeRoad, setActiveRoad } from '@/features/store/RoadSlice';
+import { setDirectionsInstructions, toggleStateName, removeRoute } from '@/features/store/mapSlice';
+import { removeRoad, setActiveRoad, toggleSelectedRoad } from '@/features/store/RoadSlice';
 import type { GeoJsonProperties } from 'geojson';
 import type { DirectionStep, Road } from '@/interface/Interface';
 import { toast } from 'sonner';
-import {Navigation, MapPin, Clock, Route, Check} from 'lucide-react';
+import { Navigation, MapPin, Clock, Route, Check } from 'lucide-react';
 import { MapContext } from '@/components/context/MapContext';
 import { getCentroid } from '@/lib/getCentroid';
 import {Card, CardContent, CardDescription, CardHeader, CardTitle} from '@/components/ui/card';
 import type { Feature } from 'geojson';
 import { fetchAndDispatchRoute } from '@/lib/routeUtils';
-import RoadLine from './RoadLine';
+import AddRoadLine from './AddRoadLine';
 import LocationAdd from './LocationAdd';
 import { RoadHistoryItem } from './RoadHistory';
 
@@ -26,7 +26,10 @@ const getDensity = (props: GeoJsonProperties | null | undefined): number => {
   if (!props) return 0;
   const v = props.density;
   if (typeof v === 'number') return v;
-  if (typeof v === 'string') { const n = parseFloat(v); return isNaN(n) ? 0 : n; }
+  if (typeof v === 'string') {
+    const n = parseFloat(v);
+    return isNaN(n) ? 0 : n;
+  }
   return 0;
 };
 
@@ -38,7 +41,6 @@ function fmtTime(s: number) {
     ? `${Math.floor(s / 3600)}h ${Math.round((s % 3600) / 60)}m`
     : `${Math.round(s / 60)} min`;
 }
-
 
 const Sidebar = () => {
   const [text, setText] = useState('');
@@ -53,16 +55,16 @@ const Sidebar = () => {
   const selectedStateNames: string[] = useSelector((s: RootState) => s.map.selectedStateNames ?? []);
   const roads = useSelector((s: RootState) => s.road.roads);
   const activeRoadId = useSelector((s: RootState) => s.road.activeRoadId);
+  const selectedRoadIds = useSelector((s: RootState) => s.road.selectedRoadIds);
 
   const totalDist = directions.reduce((s, d) => s + (d.distance || 0), 0);
   const totalTime = directions.reduce((s, d) => s + (d.duration || 0), 0);
 
   const filteredLocations = locations
-    .filter((l) => l.properties?.name?.toLowerCase().includes(debouncedValue.toLowerCase()))
-    .sort((a, b) => {
-      if (!sortBy) return 0;
-      const da = getDensity(a.properties), db = getDensity(b.properties);
-      return sortBy === 'area-asc' ? da - db : db - da;
+    .filter((loc) => loc.properties?.name?.toLowerCase().includes(debouncedValue.toLowerCase()))
+    .sort((a, b) => {if (!sortBy) return 0;
+      const dataA = getDensity(a.properties), dataB = getDensity(b.properties);
+      return sortBy === 'area-asc' ? dataA - dataB : dataB - dataA;
     });
 
   const handleLocationClick = (loc: Feature) => {
@@ -74,30 +76,45 @@ const Sidebar = () => {
     }
   };
 
-  const handleSelectRoad = useCallback(async (road: Road) => {
-    if (road.id === activeRoadId) {
-      dispatch(setActiveRoad(null));
-      dispatch(setRoutes([]));
-      dispatch(setDirectionsInstructions([]));
-      return;
-    }
-    setRouteLoading(true);
-    try {
-      await fetchAndDispatchRoute({ road, dispatch, map });
-    } catch {
-      toast.error(`Marshrut topilmadi: ${road.name}`);
-    } finally {
-      setRouteLoading(false);
-    }
-  }, [activeRoadId, dispatch, map]);
+  const handleSelectRoad = useCallback(
+    async (road: Road) => {
+      const isCurrentlySelected = selectedRoadIds.includes(road.id);
 
-  const handleRemoveRoad = useCallback((id: string) => {
-    dispatch(removeRoad(id));
-    if (id === activeRoadId) {
-      dispatch(setRoutes([]));
-      dispatch(setDirectionsInstructions([]));
-    }
-  }, [activeRoadId, dispatch]);
+      if (isCurrentlySelected) {
+        dispatch(toggleSelectedRoad(road.id));
+        dispatch(removeRoute(`route-${road.id}`));
+
+        if (road.id === activeRoadId) {
+          dispatch(setActiveRoad(null));
+          dispatch(setDirectionsInstructions([]));
+        }
+        return;
+      }
+
+      setRouteLoading(true);
+      try {
+        await fetchAndDispatchRoute({ road, dispatch, map });
+      } catch {
+        toast.error(`Marshrut topilmadi: ${road.name}`);
+      } finally {
+        setRouteLoading(false);
+      }
+    },
+    [activeRoadId, selectedRoadIds, dispatch, map]
+  );
+
+  const handleRemoveRoad = useCallback(
+    (id: string) => {
+      dispatch(removeRoad(id));
+      dispatch(removeRoute(`route-${id}`));
+
+      if (id === activeRoadId) {
+        dispatch(setActiveRoad(null));
+        dispatch(setDirectionsInstructions([]));
+      }
+    },
+    [activeRoadId, dispatch]
+  );
 
   return (
     <MainSidebar variant="sidebar">
@@ -108,7 +125,9 @@ const Sidebar = () => {
           </div>
           <div>
             <div className="text-base font-bold tracking-tight">MapFlow</div>
-            <div className="text-[10px] text-muted-foreground uppercase tracking-widest">Navigator</div>
+            <div className="text-[10px] text-muted-foreground uppercase tracking-widest">
+              Navigator
+            </div>
           </div>
         </div>
       </SidebarHeader>
@@ -116,7 +135,10 @@ const Sidebar = () => {
       <SidebarContent>
         <SidebarGroup>
           <Tabs defaultValue="location" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 mx-2 mb-1" style={{ width: 'calc(100% - 16px)' }}>
+            <TabsList
+              className="grid w-full grid-cols-2 mx-2 mb-1"
+              style={{ width: 'calc(100% - 16px)' }}
+            >
               <TabsTrigger value="location">
                 <MapPin className="w-3 h-3 mr-1" /> Shtatlar
               </TabsTrigger>
@@ -134,7 +156,9 @@ const Sidebar = () => {
                 <SidebarGroupLabel>
                   Locations
                   {selectedStateNames.length > 0 && (
-                    <span className="ml-2 text-xs text-muted-foreground">({selectedStateNames.length})</span>
+                    <span className="ml-2 text-xs text-muted-foreground">
+                      ({selectedStateNames.length})
+                    </span>
                   )}
                 </SidebarGroupLabel>
                 <SidebarGroupContent className="max-h-[540px] overflow-y-auto pr-1">
@@ -152,7 +176,10 @@ const Sidebar = () => {
                               <MapPin className="w-3 h-3 text-blue-500 shrink-0" />
                               <span className="flex-1 truncate">{name}</span>
                               {isSelected && (
-                                <Check className="w-3.5 h-3.5 text-muted-foreground shrink-0" strokeWidth={2.5} />
+                                <Check
+                                  className="w-3.5 h-3.5 text-muted-foreground shrink-0"
+                                  strokeWidth={2.5}
+                                />
                               )}
                             </SidebarMenuButton>
                           </SidebarMenuItem>
@@ -167,11 +194,10 @@ const Sidebar = () => {
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
-              <LocationAdd/>
+              <LocationAdd />
             </TabsContent>
 
             <TabsContent value="road" className="px-2 space-y-3 mt-2">
-
               <Card className="border border-border/60 shadow-sm">
                 <CardHeader className="px-4 pt-4 pb-2">
                   <div className="flex items-center justify-between">
@@ -184,13 +210,20 @@ const Sidebar = () => {
                         <CardDescription className="text-[10px]">
                           {roads.length > 0
                             ? `${roads.length} ta saqlangan yo'nalish`
-                            : 'Yo\'nalishlar bu yerda saqlanadi'}
+                            : "Yo'nalishlar bu yerda saqlanadi"}
                         </CardDescription>
                       </div>
                     </div>
-                    {routeLoading && (
-                      <span className="w-4 h-4 border-2 border-muted-foreground/20 border-t-blue-500 rounded-full animate-spin" />
-                    )}
+                    <div className="flex items-center gap-2">
+                      {selectedRoadIds.length > 0 && (
+                        <span className="text-[10px] text-blue-500 font-medium bg-blue-500/10 px-2 py-0.5 rounded-full">
+                          {selectedRoadIds.length} faol
+                        </span>
+                      )}
+                      {routeLoading && (
+                        <span className="w-4 h-4 border-2 border-muted-foreground/20 border-t-blue-500 rounded-full animate-spin" />
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
 
@@ -200,7 +233,9 @@ const Sidebar = () => {
                       <div className="w-9 h-9 rounded-full bg-muted flex items-center justify-center">
                         <Route className="w-4 h-4 text-muted-foreground" />
                       </div>
-                      <p className="text-xs text-muted-foreground font-medium">Marshrut tarixi yo'q</p>
+                      <p className="text-xs text-muted-foreground font-medium">
+                        Marshrut tarixi yo'q
+                      </p>
                       <p className="text-[10px] text-muted-foreground/60 text-center px-4">
                         Qo'shilgan yo'nalishlar bu yerda ko'rinadi
                       </p>
@@ -211,7 +246,7 @@ const Sidebar = () => {
                         <RoadHistoryItem
                           key={road.id}
                           road={road}
-                          isActive={road.id === activeRoadId}
+                          isActive={selectedRoadIds.includes(road.id)}
                           onSelect={handleSelectRoad}
                           onRemove={handleRemoveRoad}
                         />
@@ -221,7 +256,7 @@ const Sidebar = () => {
                 </CardContent>
               </Card>
 
-              <RoadLine />
+              <AddRoadLine />
 
               {directions.length > 0 && (
                 <div className="rounded-xl bg-blue-500/10 border border-blue-200/50 dark:border-blue-800/30 p-3 flex items-center justify-between">
@@ -238,7 +273,6 @@ const Sidebar = () => {
             </TabsContent>
           </Tabs>
         </SidebarGroup>
-        
       </SidebarContent>
     </MainSidebar>
   );

@@ -13,14 +13,22 @@ import type { StoredRoute } from '@/interface/Interface';
 import type { MapProps } from '@/interface/Interface';
 
 function getRouteEndpoints(feature: Feature<LineString | MultiLineString> | null) {
-  if (!feature) return { start: null as [number, number] | null, end: null as [number, number] | null };
+  if (!feature)
+    return {
+      start: null as [number, number] | null,
+      end: null as [number, number] | null,
+    };
+
   let coords: number[][] = [];
-  if (feature.geometry.type === 'LineString') coords = feature.geometry.coordinates;
-  else if (feature.geometry.type === 'MultiLineString') {
+  if (feature.geometry.type === 'LineString') {
+    coords = feature.geometry.coordinates;
+  } else if (feature.geometry.type === 'MultiLineString') {
     const all = feature.geometry.coordinates;
     coords = [...all[0], ...all[all.length - 1]];
   }
+
   if (coords.length < 2) return { start: null, end: null };
+
   return {
     start: [coords[0][0], coords[0][1]] as [number, number],
     end: [coords[coords.length - 1][0], coords[coords.length - 1][1]] as [number, number],
@@ -34,38 +42,42 @@ function Map({ onMapLoad }: MapProps) {
   const selectedStateNames: string[] = useSelector((s: RootState) => s.map.selectedStateNames ?? []);
 
   const [hoveredState, setHoveredState] = useState<string | null>(null);
-  const [popupInfo, setPopupInfo] = useState<{ lng: number; lat: number; name: string } | null>(null);
+  const [popupInfo, setPopupInfo] = useState<{lng: number; lat: number; name: string;} | null>(null);
+
   const dispatch = useDispatch();
 
-  const geoJsonData = useMemo(() => ({
-    type: 'FeatureCollection' as const,
-    features: locations,
-  }), [locations]);
+  const geoJsonData = useMemo(
+    () => ({ type: 'FeatureCollection' as const, features: locations }),
+    [locations]
+  );
 
   const fillColor = useMemo((): ExpressionSpecification => {
     if (selectedStateNames.length > 0) {
       return [
         'case',
-        ['in', ['get', 'name'], ['literal', selectedStateNames]], '#ef4444',
-        ['==', ['get', 'name'], hoveredState ?? ''], '#93c5fd',
+        ['in', ['get', 'name'], ['literal', selectedStateNames]],
+        '#ef4444',
+        ['==', ['get', 'name'], hoveredState ?? ''],
+        '#93c5fd',
         '#d1d5db',
       ] as ExpressionSpecification;
     }
     return [
       'case',
-      ['==', ['get', 'name'], hoveredState ?? ''], '#93c5fd',
+      ['==', ['get', 'name'], hoveredState ?? ''],
+      '#93c5fd',
       '#d1d5db',
     ] as ExpressionSpecification;
   }, [selectedStateNames, hoveredState]);
 
-  const firstRouteStart = useMemo(() => {
-    if (!routes.length) return null;
-    return getRouteEndpoints(routes[0].geometry as Feature<LineString | MultiLineString>).start;
-  }, [routes]);
-
-  const lastRouteEnd = useMemo(() => {
-    if (!routes.length) return null;
-    return getRouteEndpoints(routes[routes.length - 1].geometry as Feature<LineString | MultiLineString>).end;
+  //Marker
+  const routeEndpoints = useMemo(() => {
+    return routes.map((route: StoredRoute) => {
+      const { start, end } = getRouteEndpoints(
+        route.geometry as Feature<LineString | MultiLineString>
+      );
+      return { id: route.id, start, end, color: route.color };
+    });
   }, [routes]);
 
   return (
@@ -87,26 +99,27 @@ function Map({ onMapLoad }: MapProps) {
         cursor={hoveredState ? 'pointer' : 'auto'}
         interactiveLayerIds={['states-fill']}
         onLoad={(e) => onMapLoad?.(e.target)}
-
         onMouseMove={(e) => {
           const feature = e.features?.[0];
           if (feature) {
             const name = feature.properties?.name;
             setHoveredState(name);
             if (popupInfo?.name !== name) {
-              setPopupInfo({ lng: e.lngLat.lng, lat: e.lngLat.lat, name: name ?? 'Unknown' });
+              setPopupInfo({
+                lng: e.lngLat.lng,
+                lat: e.lngLat.lat,
+                name: name ?? 'Unknown',
+              });
             }
           } else {
             setHoveredState(null);
             setPopupInfo(null);
           }
         }}
-
         onMouseLeave={() => {
           setHoveredState(null);
           setPopupInfo(null);
         }}
-
         onClick={(e) => {
           const feature = e.features?.[0];
           if (feature) {
@@ -160,41 +173,77 @@ function Map({ onMapLoad }: MapProps) {
 
         {routes.map((route: StoredRoute) => (
           <Source key={route.id} id={route.id} type="geojson" data={route.geometry}>
-            <Layer id={`${route.id}-shadow`} type="line"
+            <Layer
+              id={`${route.id}-shadow`}
+              type="line"
               layout={{ 'line-cap': 'round', 'line-join': 'round' }}
-              paint={{ 'line-color': '#000', 'line-width': 10, 'line-opacity': 0.12, 'line-blur': 4 }}
+              paint={{
+                'line-color': '#000',
+                'line-width': 10,
+                'line-opacity': 0.12,
+                'line-blur': 4,
+              }}
             />
-            <Layer id={`${route.id}-bg`} type="line"
+            <Layer
+              id={`${route.id}-bg`}
+              type="line"
               layout={{ 'line-cap': 'round', 'line-join': 'round' }}
               paint={{ 'line-color': '#fff', 'line-width': 7, 'line-opacity': 0.7 }}
             />
-            <Layer id={`${route.id}-line`} type="line"
+            <Layer
+              id={`${route.id}-line`}
+              type="line"
               layout={{ 'line-cap': 'round', 'line-join': 'round' }}
               paint={{ 'line-color': route.color, 'line-width': 5, 'line-opacity': 1 }}
             />
-            <Layer id={`${route.id}-dash`} type="line"
+            <Layer
+              id={`${route.id}-dash`}
+              type="line"
               layout={{ 'line-cap': 'round', 'line-join': 'round' }}
-              paint={{ 'line-color': '#ffffff', 'line-width': 2, 'line-opacity': 0.6, 'line-dasharray': [0, 4] }}
+              paint={{
+                'line-color': '#ffffff',
+                'line-width': 2,
+                'line-opacity': 0.6,
+                'line-dasharray': [0, 4],
+              }}
             />
           </Source>
         ))}
 
-        {firstRouteStart && (
-          <Marker longitude={firstRouteStart[0]} latitude={firstRouteStart[1]} anchor="bottom">
-            <StartMarker />
-          </Marker>
-        )}
-        {lastRouteEnd && (
-          <Marker longitude={lastRouteEnd[0]} latitude={lastRouteEnd[1]} anchor="bottom">
-            <EndMarker />
-          </Marker>
-        )}
+        {routeEndpoints.map(({ id, start, end, color }) => (
+          <>
+            {start && (
+              <Marker
+                key={`start-${id}`}
+                longitude={start[0]}
+                latitude={start[1]}
+                anchor="bottom"
+              >
+                <StartMarker color={color} />
+              </Marker>
+            )}
+            {end && (
+              <Marker
+                key={`end-${id}`}
+                longitude={end[0]}
+                latitude={end[1]}
+                anchor="bottom"
+              >
+                <EndMarker color={color} />
+              </Marker>
+            )}
+          </>
+        ))}
 
         {selectedLocations.length > 0 && (
-          <Source id="multi-selected-source" type="geojson"
+          <Source
+            id="multi-selected-source"
+            type="geojson"
             data={{ type: 'FeatureCollection', features: selectedLocations }}
           >
-            <Layer id="multi-selected-layer" type="circle"
+            <Layer
+              id="multi-selected-layer"
+              type="circle"
               paint={{
                 'circle-radius': 10,
                 'circle-color': '#f59e0b',
@@ -216,14 +265,18 @@ function Map({ onMapLoad }: MapProps) {
             onClose={() => setPopupInfo(null)}
             offset={16}
           >
-            <div style={{
-              fontFamily: 'system-ui, sans-serif',
-              padding: '12px 16px',
-              minWidth: 160,
-              background: '#fff',
-              borderRadius: 14,
-            }}>
-              <div style={{ fontWeight: 700, fontSize: 14, color: '#0f172a', marginBottom: 2 }}>
+            <div
+              style={{
+                fontFamily: 'system-ui, sans-serif',
+                padding: '12px 16px',
+                minWidth: 160,
+                background: '#fff',
+                borderRadius: 14,
+              }}
+            >
+              <div
+                style={{ fontWeight: 700, fontSize: 14, color: '#0f172a', marginBottom: 2 }}
+              >
                 {popupInfo.name}
               </div>
               <div style={{ fontSize: 11, color: '#64748b' }}>
