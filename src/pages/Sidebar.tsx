@@ -24,10 +24,10 @@ import { RoadHistoryItem } from './RoadHistory';
 
 const getDensity = (props: GeoJsonProperties | null | undefined): number => {
   if (!props) return 0;
-  const v = props.density;
-  if (typeof v === 'number') return v;
-  if (typeof v === 'string') {
-    const n = parseFloat(v);
+  const area = props.density;
+  if (typeof area === 'number') return area;
+  if (typeof area === 'string') {
+    const n = parseFloat(area);
     return isNaN(n) ? 0 : n;
   }
   return 0;
