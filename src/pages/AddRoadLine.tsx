@@ -127,10 +127,7 @@ const AddRoadLine = () => {
               />
             </div>
 
-                <div>
-              <ComboboxLocation selected={from} onUpdate={setFrom} placeholder="Qayerdan?" />
-                </div>
-              
+            <ComboboxLocation selected={from} onUpdate={setFrom} placeholder="Qayerdan?" />
 
             <div className="flex items-center gap-2">
               <div className="flex-1 h-px bg-border/60" />
@@ -146,17 +143,17 @@ const AddRoadLine = () => {
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
                 Yo'l rangi
               </label>
-              <div className="flex items-center gap-3 p-3 rounded-xl border border-border/60 bg-muted/20">
+              <div className="flex items-center gap-3  rounded-xl border border-border/60 bg-muted/20">
                 <ColorsGroup value={color} onChange={setColor} />
                 <div
-                  className="ml-auto h-1.5 w-12 rounded-full shrink-0"
+                  className="h-1.5 w-12 rounded-full shrink-0"
                   style={{ backgroundColor: color }}
                 />
               </div>
             </div>
           </div>
 
-          <DialogFooter className="gap-2 sm:gap-2">
+          <DialogFooter>
             <Button variant="ghost" size="sm" onClick={() => setOpen(false)} className="gap-1.5">
               <X className="w-3.5 h-3.5" />
               Bekor
@@ -168,7 +165,7 @@ const AddRoadLine = () => {
               className="gap-1.5"
               style={isValid ? { backgroundColor: color, color: '#fff' } : undefined}
             >
-              <Plus className="w-3.5 h-3.5" />
+              <Plus size={"icon"}/>
               Qo'shish
             </Button>
           </DialogFooter>
