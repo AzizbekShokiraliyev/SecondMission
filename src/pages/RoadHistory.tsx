@@ -24,13 +24,11 @@ export const RoadHistoryItem = ({road, isActive, onSelect, onRemove}: RoadHistor
     }
     `}
     >
-    {/* Road rangi */}
     <span
       className="w-2.5 h-2.5 rounded-full shrink-0"
       style={{ backgroundColor: road.color }}
       />
 
-    {/* Nom va vaqt */}
     <div className="flex-1 min-w-0">
       <p className="text-xs font-medium truncate">{road.name}</p>
       <div className="flex items-center gap-1 mt-0.5">
@@ -40,7 +38,6 @@ export const RoadHistoryItem = ({road, isActive, onSelect, onRemove}: RoadHistor
       </div>
     </div>
 
-    {/* Active holat ko'rsatgichi */}
     {isActive ? (
       <div className="flex items-center gap-1 shrink-0">
         <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
@@ -50,7 +47,6 @@ export const RoadHistoryItem = ({road, isActive, onSelect, onRemove}: RoadHistor
       <ChevronRight className="w-3.5 h-3.5 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors shrink-0" />
     )}
 
-    {/* O'chirish tugmasi */}
     <button
       onClick={(e) => {
         e.stopPropagation();
