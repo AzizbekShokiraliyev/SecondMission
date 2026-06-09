@@ -12,8 +12,6 @@ function timeAgo(ts: number): string {
 }
 
 export const RoadHistoryItem = ({road, isActive, onSelect, onRemove}: RoadHistory) => (
-
-  
   <div
   onClick={() => onSelect(road)}
   className={`
