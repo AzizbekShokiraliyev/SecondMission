@@ -14,9 +14,7 @@ const roadSlice = createSlice({name: 'road', initialState, reducers: { addRoad(s
     
     removeRoad(state, action: PayloadAction<string>) {
       state.roads = state.roads.filter((r) => r.id !== action.payload);
-      if (state.activeRoadId === action.payload) {
-        state.activeRoadId = null;
-      }
+      if (state.activeRoadId === action.payload) {state.activeRoadId = null}
       state.selectedRoadIds = state.selectedRoadIds.filter((id) => id !== action.payload);
     },
 
@@ -27,16 +25,13 @@ const roadSlice = createSlice({name: 'road', initialState, reducers: { addRoad(s
     toggleSelectedRoad(state, action: PayloadAction<string>) {
       const id = action.payload;
       const idx = state.selectedRoadIds.indexOf(id);
-      if (idx >= 0) {
-        state.selectedRoadIds.splice(idx, 1);
+      if (idx >= 0) {state.selectedRoadIds.splice(idx, 1);
       } else {
         state.selectedRoadIds.push(id);
       }
     },
 
-    clearSelectedRoads(state) {
-      state.selectedRoadIds = [];
-    },
+    clearSelectedRoads(state) {state.selectedRoadIds = []},
 
     cacheRoute(state, action: PayloadAction<{
         roadId: string;

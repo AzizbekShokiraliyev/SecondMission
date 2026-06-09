@@ -20,17 +20,18 @@ const ComboboxLocation = memo(({selected, onUpdate, placeholder = "Qidirish...",
         setSearch("");
       }
     };
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside, { passive: true });
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const filteredLocations = useMemo(() => {
     return locations.filter(
       (loc) =>
-        loc.properties?.name !== selected?.properties?.name &&
+        loc.id !== selected?.id &&
         loc.properties?.name?.toLowerCase().includes(search.toLowerCase())
     );
   }, [locations, selected, search]);
+
 
   const handleSelect = useCallback(
     (loc: (typeof locations)[0]) => {

@@ -8,17 +8,26 @@ import { getCentroid } from '@/lib/getCentroid';
 import { toast } from 'sonner';
 import ComboboxLocation from './ComboboxLocation';
 import ColorsGroup from './ColorsGroup';
-import { ROUTE_COLORS, fetchAndDispatchRoute } from '@/lib/routeUtils'; 
+import { fetchAndDispatchRoute } from '@/lib/routeUtils'; 
 import type { Feature } from 'geojson';
 import { Map } from 'maplibre-gl';
 import type { Road, RoadPoint } from '@/interface/Interface';
 import { addRoad } from '@/features/store/RoadSlice';
 
+const ROUTE_COLORS = [
+  { hex: '#378ADD', name: "Ko'k" },
+  { hex: '#1D9E75', name: 'Yashil' },
+  { hex: '#E24B4A', name: 'Qizil' },
+  { hex: '#7F77DD', name: 'Binafsha' },
+  { hex: '#F59E0B', name: 'Sariq' },
+  { hex: '#EC4899', name: 'Pushti' },
+];
+
 const AddRoadLine = () => {
   const dispatch = useDispatch();
   const mapContext = useContext(MapContext);
   const map = mapContext instanceof Map ? mapContext : null;
-
+  
   const [open, setOpen] = useState(false);
   const [from, setFrom] = useState<Feature | null>(null);
   const [to, setTo] = useState<Feature | null>(null);
@@ -26,6 +35,8 @@ const AddRoadLine = () => {
   const [roadName, setRoadName] = useState('');
   const [loading, setLoading] = useState(false);
   const mountedRef = useRef(true);
+  
+  // AbortController //custom hook //useEffect clenup function
 
   useEffect(() => {mountedRef.current = true;
     return () => {

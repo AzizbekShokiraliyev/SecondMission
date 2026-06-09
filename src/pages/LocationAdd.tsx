@@ -30,13 +30,8 @@ const LocationAdd = () => {
 
     const feature: Feature<Point> = {
       type: "Feature",
-      geometry: {
-        type: "Point",
-        coordinates: [lngNum, latNum],
-      },
-      properties: {
-        name: name.trim(),
-      },
+      geometry: {type: "Point", coordinates: [lngNum, latNum]},
+      properties: {name: name.trim()},
     };
 
     dispatch(addLocation(feature));
