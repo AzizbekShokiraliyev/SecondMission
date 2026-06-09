@@ -51,6 +51,7 @@ const mapSlice = createSlice({
         state.routes.push(action.payload);
       }
     },
+    // Bitta route olib tashlash
     removeRoute(state, action: PayloadAction<string>) {
       state.routes = state.routes.filter((r) => r.id !== action.payload);
     },

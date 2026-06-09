@@ -1,8 +1,9 @@
 import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { ROUTE_COLORS } from '@/lib/routeUtils'; 
 import type { ColorsGroupProps } from '@/interface/Interface';
+import { ROUTE_COLORS } from '@/hooks/globalCol';
+
 
 const ColorsGroup = ({ value, onChange }: ColorsGroupProps) => {
   return (
